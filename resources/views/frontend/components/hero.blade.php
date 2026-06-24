@@ -1,5 +1,4 @@
-<!-- Hero Banner Section -->
-<section class="hero-section text-white d-flex align-items-center" style="background-image: url('https://images.unsplash.com/photo-1486006920555-c77dce18193b?q=80&w=1920&auto=format&fit=crop');">
+<section class="hero-section text-white d-flex align-items-center" style="background-image: url('{{ asset('frontend/images/hero-bg.webp') }}');">
     <div class="container">
         <div class="row align-items-center">
             
@@ -28,10 +27,7 @@
             <!-- Hero Search Form Container -->
             <div class="col-lg-6">
                 <div class="search-container text-dark">
-                    <div class="d-flex gap-3 mb-4 border-bottom pb-2">
-                        <button class="search-tab-btn active"><i class="fa fa-car me-2"></i>Search by Vehicle</button>
-                        <button class="search-tab-btn" onclick="alert('Part Number search is available in the input box below. Simply type your Part Name or OEM Code!')"><i class="fa fa-barcode me-2"></i>Search by Part Number</button>
-                    </div>
+
                     
                     <!-- Include the actual search form component -->
                     @include('frontend.components.search-form')

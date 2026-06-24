@@ -25,8 +25,6 @@
                             <th>Contact Info</th>
                             <th>Vehicle Application</th>
                             <th>Requested Part</th>
-                            <th>Assigned Agent</th>
-                            <th width="180">Assign Agent</th>
                             <th width="100">Actions</th>
                         </tr>
                     </thead>
@@ -50,25 +48,7 @@
                                     <span class="text-muted small">VIN: <code>{{ $lead->vin ?? 'Not Provided' }}</code></span>
                                 </td>
                                 <td>{{ $lead->part_requested }}</td>
-                                <td>
-                                    @if($lead->assignedAgent)
-                                        <span class="badge bg-primary">{{ $lead->assignedAgent->name }}</span>
-                                    @else
-                                        <span class="badge bg-secondary">Unassigned</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.leads.assign', $lead->id) }}" method="POST" class="d-flex gap-1">
-                                        @csrf
-                                        <select class="form-select form-select-sm border-secondary-subtle" name="agent_id" style="padding: 6px;">
-                                            <option value="">Select Agent</option>
-                                            @foreach($agents as $agent)
-                                                <option value="{{ $agent->id }}">{{ $agent->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-secondary btn-sm px-2 py-1"><i class="fa fa-user-plus"></i></button>
-                                    </form>
-                                </td>
+
                                 <td>
                                     <div class="d-flex gap-2">
                                         @if(!$lead->is_read)
@@ -103,17 +83,7 @@
                                         <span class="text-muted small">VIN: <code>4T1BF1FKXJU12345{{ $i }}</code></span>
                                     </td>
                                     <td>Complete Engine Block Assembly (2.5L)</td>
-                                    <td><span class="badge bg-secondary">Unassigned</span></td>
-                                    <td>
-                                        <form class="d-flex gap-1" onsubmit="event.preventDefault(); alert('Agent assigned (Mockup)');">
-                                            <select class="form-select form-select-sm border-secondary-subtle" style="padding: 6px;">
-                                                <option value="">Select Agent</option>
-                                                <option value="1">Super Admin</option>
-                                                <option value="2">Customer Support 1</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-secondary btn-sm px-2 py-1"><i class="fa fa-user-plus"></i></button>
-                                        </form>
-                                    </td>
+
                                     <td>
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-secondary btn-sm px-2 py-1" onclick="alert('Mark Read complete (Mockup)')"><i class="fa fa-eye"></i></button>
@@ -134,13 +104,31 @@
 @push('admin-scripts')
     <script>
         function markAsRead(leadId) {
-            // Mock AJAX mark read request trigger
-            alert('Lead marked as read (Mockup)');
-            const row = document.getElementById('lead-row-' + leadId);
-            if (row) {
-                row.classList.remove('table-warning', 'fw-bold');
-            }
-            window.location.reload();
+            const url = "{{ route('admin.leads.read', ':id') }}".replace(':id', leadId);
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById('lead-row-' + leadId);
+                    if (row) {
+                        row.classList.remove('table-warning', 'fw-bold');
+                    }
+                    window.location.reload();
+                } else {
+                    alert('Error marking lead as read: ' + (data.message || 'unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Connection error occurred while marking lead as read.');
+            });
         }
     </script>
 @endpush

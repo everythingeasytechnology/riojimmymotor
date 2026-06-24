@@ -284,7 +284,7 @@
         "name": "Auto Parts Marketplace",
         "logo": {
           "@@type": "ImageObject",
-          "url": "{{ asset('frontend/images/logo.png') }}"
+          "url": "{{ asset('frontend/images/riojimmymotorLogo.webp') }}"
         }
       },
       "datePublished": "2026-06-18",

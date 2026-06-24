@@ -48,10 +48,12 @@ class SettingController extends Controller
         Setting::setValue('custom_header_scripts', $request->custom_header_scripts);
         Setting::setValue('custom_footer_scripts', $request->custom_footer_scripts);
 
-        // Handle Site Logo uploads mock
+        // Handle Site Logo uploads
         if ($request->hasFile('site_logo')) {
             $file = $request->file('site_logo');
-            $logoPath = '/uploads/settings/' . time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/settings'), $filename);
+            $logoPath = '/uploads/settings/' . $filename;
             Setting::setValue('site_logo', $logoPath);
         }
 

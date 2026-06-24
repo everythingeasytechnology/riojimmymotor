@@ -56,7 +56,7 @@
                                 <td>{{ $blog->published_at ? $blog->published_at->format('Y-m-d H:i') : 'Not Set' }}</td>
                                 <td>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-outline-secondary btn-sm px-2 py-1" onclick="alert('Mock Edit article ID: {{ $blog->id }}')"><i class="fa fa-edit"></i></button>
+                                        <a href="{{ route('admin.blogs.edit', $blog->id) }}" class="btn btn-outline-secondary btn-sm px-2 py-1"><i class="fa fa-edit"></i></a>
                                         <form action="{{ route('admin.blogs.destroy', $blog->id) }}" method="POST" onsubmit="return confirm('Delete this article?');">
                                             @csrf
                                             @method('DELETE')

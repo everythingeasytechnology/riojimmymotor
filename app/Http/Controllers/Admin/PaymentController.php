@@ -21,12 +21,6 @@ class PaymentController extends Controller
                 'mode' => Setting::getValue('payment_stripe_mode', 'sandbox'),
                 'webhook' => Setting::getValue('payment_stripe_webhook', '')
             ],
-            'paypal' => [
-                'enabled' => Setting::getValue('payment_paypal_enabled', '0'),
-                'client_id' => Setting::getValue('payment_paypal_client', ''),
-                'secret' => Setting::getValue('payment_paypal_secret', ''),
-                'mode' => Setting::getValue('payment_paypal_mode', 'sandbox')
-            ],
             'razorpay' => [
                 'enabled' => Setting::getValue('payment_razorpay_enabled', '0'),
                 'key_id' => Setting::getValue('payment_razorpay_key', ''),
@@ -50,13 +44,10 @@ class PaymentController extends Controller
         Setting::setValue('payment_stripe_mode', $request->stripe_mode);
         Setting::setValue('payment_stripe_webhook', $request->stripe_webhook);
 
-        // 2. PayPal config
-        Setting::setValue('payment_paypal_enabled', $request->has('paypal_enabled') ? '1' : '0');
-        Setting::setValue('payment_paypal_client', $request->paypal_client_id);
-        Setting::setValue('payment_paypal_secret', $request->paypal_secret);
-        Setting::setValue('payment_paypal_mode', $request->paypal_mode);
+        // Force disable PayPal
+        Setting::setValue('payment_paypal_enabled', '0');
 
-        // 3. Razorpay config
+        // 2. Razorpay config
         Setting::setValue('payment_razorpay_enabled', $request->has('razorpay_enabled') ? '1' : '0');
         Setting::setValue('payment_razorpay_key', $request->razorpay_key_id);
         Setting::setValue('payment_razorpay_secret', $request->razorpay_key_secret);

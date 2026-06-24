@@ -76,11 +76,13 @@ class ProductController extends Controller
             $data['compatibility'] = $compats;
         }
 
-        // Mock upload images gallery
+        // Upload images gallery
         if ($request->hasFile('gallery_images')) {
             $images = [];
             foreach ($request->file('gallery_images') as $file) {
-                $images[] = '/uploads/products/' . time() . '_' . $file->getClientOriginalName();
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/products'), $filename);
+                $images[] = '/uploads/products/' . $filename;
             }
             $data['images'] = $images;
         } else {
@@ -143,11 +145,13 @@ class ProductController extends Controller
             $data['compatibility'] = $compats;
         }
 
-        // Gallery images upload mock
+        // Gallery images upload
         if ($request->hasFile('gallery_images')) {
             $images = $product->images ?? [];
             foreach ($request->file('gallery_images') as $file) {
-                $images[] = '/uploads/products/' . time() . '_' . $file->getClientOriginalName();
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/products'), $filename);
+                $images[] = '/uploads/products/' . $filename;
             }
             $data['images'] = $images;
         }

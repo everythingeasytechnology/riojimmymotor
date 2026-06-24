@@ -71,7 +71,9 @@ class BlogController extends Controller
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $data['image'] = '/uploads/blogs/' . time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/blogs'), $filename);
+            $data['image'] = '/uploads/blogs/' . $filename;
         }
 
         Blog::create($data);
@@ -127,7 +129,9 @@ class BlogController extends Controller
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $data['image'] = '/uploads/blogs/' . time() . '_' . $file->getClientOriginalName();
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/blogs'), $filename);
+            $data['image'] = '/uploads/blogs/' . $filename;
         }
 
         $blog->update($data);

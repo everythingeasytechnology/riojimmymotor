@@ -34,19 +34,7 @@ class DashboardController extends Controller
         $recent_orders = Order::latest()->take(5)->get();
         $recent_products = Product::latest()->take(5)->get();
 
-        // 3. Fallbacks if database is empty (for demo/mockup visualization)
-        if ($stats['total_products'] === 0) {
-            $stats = [
-                'total_products' => 1420,
-                'total_categories' => 12,
-                'total_orders' => 384,
-                'total_revenue' => 124500.00,
-                'total_blogs' => 18,
-                'total_users' => 92,
-                'total_leads' => 45,
-                'unread_leads' => 8
-            ];
-        }
+
 
         return view('admin.dashboard', compact('stats', 'recent_orders', 'recent_products'));
     }

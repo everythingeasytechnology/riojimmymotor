@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Admin Dashboard | Auto Parts Marketplace</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -240,9 +241,8 @@
 
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
-            <a href="{{ url('/admin/dashboard') }}" class="sidebar-brand">
-                <i class="fa fa-gears text-danger"></i>
-                <span>AUTO<span class="text-danger">MARKET</span></span>
+            <a href="{{ url('/admin/dashboard') }}" class="sidebar-brand py-2 justify-content-center">
+                <img src="{{ asset('frontend/images/riojimmymotorLogo.webp') }}" alt="Rio Jimmy Motor Logo" style="max-height: 45px; object-fit: contain;">
             </a>
             
             <ul class="sidebar-menu">

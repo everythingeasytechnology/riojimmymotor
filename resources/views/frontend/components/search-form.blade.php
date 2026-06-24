@@ -1,46 +1,92 @@
-<form action="{{ url('/parts') }}" method="GET" class="row g-3">
-    <!-- Year Select -->
-    <div class="col-md-6 col-12">
-        <label for="search-year" class="form-label fw-600 text-dark small">1. SELECT YEAR</label>
-        <select class="form-select border-secondary-subtle" name="year" id="search-year" required style="padding: 12px;">
-            <option value="">Select Year</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-            <option value="2022">2022</option>
-            <option value="2021">2021</option>
-        </select>
+<div class="text-center mb-4 font-poppins">
+    <h3 class="fw-bold text-dark fs-5" style="margin-bottom: 8px; line-height: 1.4;">Grade A Used Engine's & Transmission's Available Across USA</h3>
+    <p class="text-muted mb-0" style="font-size: 14px; line-height: 1.5;">
+        Speak with a specialist now.<br>
+        <strong>Get exact engine price in under 60 seconds.</strong>
+    </p>
+</div>
+
+<form id="inquiryForm" class="d-flex flex-column gap-3">
+    @csrf
+    <!-- Year / Make / Model -->
+    <div>
+        <input type="text" name="vehicle" class="form-control form-control-lg bg-white border-secondary-subtle font-poppins" placeholder="Year / Make / Model" required style="padding: 14px; font-size: 16px; border-radius: 6px;">
     </div>
 
-    <!-- Make Select -->
-    <div class="col-md-6 col-12">
-        <label for="search-make" class="form-label fw-600 text-dark small">2. SELECT MAKE</label>
-        <select class="form-select border-secondary-subtle" name="make" id="search-make" disabled required style="padding: 12px;">
-            <option value="">Select Make</option>
-        </select>
+    <!-- Engine Size (Optional) -->
+    <div>
+        <input type="text" name="engine_size" class="form-control form-control-lg bg-white border-secondary-subtle font-poppins" placeholder="Engine Size (Optional)" style="padding: 14px; font-size: 16px; border-radius: 6px;">
     </div>
 
-    <!-- Model Select -->
-    <div class="col-md-6 col-12">
-        <label for="search-model" class="form-label fw-600 text-dark small">3. SELECT MODEL</label>
-        <select class="form-select border-secondary-subtle" name="model" id="search-model" disabled required style="padding: 12px;">
-            <option value="">Select Model</option>
-        </select>
+    <!-- Your Phone Number -->
+    <div>
+        <input type="tel" name="phone" class="form-control form-control-lg bg-white border-secondary-subtle font-poppins" placeholder="Your Phone Number" required style="padding: 14px; font-size: 16px; border-radius: 6px;">
     </div>
 
-    <!-- Part Name Select or Input -->
-    <div class="col-md-6 col-12">
-        <label for="search-part" class="form-label fw-600 text-dark small">4. ENTER PART NAME</label>
-        <input type="text" class="form-control border-secondary-subtle font-poppins" name="part_name" id="search-part" placeholder="e.g. Engine, Transmission, Bumper" required style="padding: 12px;">
-    </div>
-
-    <!-- Submit Search Button -->
-    <div class="col-12 mt-4">
-        <button type="submit" class="btn btn-primary w-100 py-3 text-uppercase font-poppins text-white shadow-sm">
-            <i class="fa fa-search me-2"></i> Find My Part Now
+    <!-- Submit Button -->
+    <div class="mt-2">
+        <button type="submit" class="btn btn-danger w-100 py-3 fw-bold text-white border-0 font-poppins" style="background-color: #c62828; font-size: 18px; border-radius: 6px; letter-spacing: 0.5px;">
+            Call Now to Check Price
         </button>
     </div>
 
-    <div class="col-12 text-center mt-3">
-        <span class="text-muted small"><i class="fa fa-shield-alt text-success me-1"></i> Your search is 100% private and secure.</span>
-    </div>
+    <!-- Alert Container -->
+    <div id="inquiryAlert" class="mt-2 d-none alert font-poppins" role="alert" style="font-size: 14px; padding: 12px;"></div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('inquiryForm');
+    const alertBox = document.getElementById('inquiryAlert');
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Reset alert
+            alertBox.classList.add('d-none');
+            alertBox.classList.remove('alert-success', 'alert-danger');
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting Request...';
+
+            const formData = new FormData(form);
+
+            fetch('{{ route("inquiry.submit") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+
+                if (data.success) {
+                    alertBox.classList.remove('d-none');
+                    alertBox.classList.add('alert-success');
+                    alertBox.textContent = data.message;
+                    form.reset();
+                } else {
+                    alertBox.classList.remove('d-none');
+                    alertBox.classList.add('alert-danger');
+                    alertBox.textContent = data.message || 'An error occurred. Please try again.';
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                alertBox.classList.remove('d-none');
+                alertBox.classList.add('alert-danger');
+                alertBox.textContent = 'A connection error occurred. Please try again.';
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>

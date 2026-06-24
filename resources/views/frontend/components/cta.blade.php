@@ -13,8 +13,8 @@
                 <!-- CTA Actions -->
                 <div class="col-lg-4 text-center text-lg-end">
                     <div class="d-flex flex-column gap-3 align-items-center align-items-lg-end">
-                        <a href="tel:+18005550199" class="btn btn-primary btn-lg w-100 py-3 text-uppercase font-poppins text-white shadow-sm" style="font-size: 16px;">
-                            <i class="fa fa-phone-volume me-2"></i> Call +1 (800) 555-0199
+                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteSettings->get('contact_phone', '+18005550199')) }}" class="btn btn-primary btn-lg w-100 py-3 text-uppercase font-poppins text-white shadow-sm" style="font-size: 16px;">
+                            <i class="fa fa-phone-volume me-2"></i> Call {{ $siteSettings->get('contact_phone', '+1 (800) 555-0199') }}
                         </a>
                         <a href="{{ url('/contact?inquiry=1') }}" class="btn btn-secondary btn-lg w-100 py-3 text-uppercase font-poppins text-white shadow-sm" style="font-size: 16px;">
                             <i class="fa fa-envelope me-2"></i> Submit Online Request

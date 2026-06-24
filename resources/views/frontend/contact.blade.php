@@ -1,7 +1,7 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'Contact Our Used Parts Experts | Auto Parts Marketplace')
-@section('meta_description', 'Contact Auto Parts Marketplace for help locating a used engine, transmission, or body panel. Speak to a live specialist at +1 (800) 555-0199.')
+@section('meta_title', 'Contact Our Used Parts Experts | ' . $siteSettings->get('site_name', 'Auto Parts Marketplace'))
+@section('meta_description', 'Contact ' . $siteSettings->get('site_name', 'Auto Parts Marketplace') . ' for help locating a used engine, transmission, or body panel. Speak to a live specialist at ' . $siteSettings->get('contact_phone', '+1 (800) 555-0199') . '.')
 
 @section('content')
 
@@ -36,7 +36,7 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1">Call Toll-Free</h5>
-                            <p class="mb-0 text-danger fw-bold fs-5"><a href="tel:+18005550199" class="text-danger text-decoration-none">+1 (800) 555-0199</a></p>
+                            <p class="mb-0 text-danger fw-bold fs-5"><a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteSettings->get('contact_phone', '+18005550199')) }}" class="text-danger text-decoration-none">{{ $siteSettings->get('contact_phone', '+1 (800) 555-0199') }}</a></p>
                             <span class="text-muted small">Customer Service & Quote Hotline</span>
                         </div>
                     </div>
@@ -48,7 +48,7 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1">Email Inquiries</h5>
-                            <p class="mb-0 text-dark fw-bold"><a href="mailto:support@autopartsmarket.com" class="text-dark text-decoration-none">support@autopartsmarket.com</a></p>
+                            <p class="mb-0 text-dark fw-bold"><a href="mailto:{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}" class="text-dark text-decoration-none">{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}</a></p>
                             <span class="text-muted small">Standard response within 2 business hours</span>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1">Corporate Headquarters</h5>
-                            <p class="mb-0 text-muted">100 Industrial Pkwy, Suite 400<br>Detroit, MI 48201</p>
+                            <p class="mb-0 text-muted">{!! nl2br(e($siteSettings->get('office_address', "100 Industrial Pkwy, Suite 400\nDetroit, MI 48201"))) !!}</p>
                         </div>
                     </div>
 
@@ -71,7 +71,7 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1">Business Hours</h5>
-                            <p class="mb-0 text-muted">Monday - Friday: 8:00 AM - 7:00 PM EST<br>Saturday: 9:00 AM - 4:00 PM EST<br>Sunday: Closed</p>
+                            <p class="mb-0 text-muted">{!! nl2br(e($siteSettings->get('business_hours', "Monday - Friday: 8:00 AM - 7:00 PM EST\nSaturday: 9:00 AM - 4:00 PM EST\nSunday: Closed"))) !!}</p>
                         </div>
                     </div>
                 </div>
@@ -82,53 +82,56 @@
                         <h3 class="fw-700 mb-2">Request A Free Quote</h3>
                         <p class="text-muted mb-4">Submit your vehicle details below and our parts specialists will cross-reference inventories and email you price and shipping options.</p>
                         
-                        <form onsubmit="event.preventDefault(); alert('Inquiry submitted successfully! A parts specialist will contact you shortly.');">
+                        <form id="contactForm" action="{{ route('contact.submit') }}" method="POST">
+                            @csrf
+                            <div id="contactAlert" class="alert d-none font-poppins mb-4" role="alert" style="font-size: 14px; padding: 12px;"></div>
+                            
                             <div class="row g-3">
                                 <!-- Name -->
                                 <div class="col-md-6 col-12">
                                     <label class="form-label fw-bold small text-dark">FULL NAME *</label>
-                                    <input type="text" class="form-control bg-white" placeholder="John Doe" required style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="John Doe" name="name" required style="padding: 10px;">
                                 </div>
                                 <!-- Email -->
                                 <div class="col-md-6 col-12">
                                     <label class="form-label fw-bold small text-dark">EMAIL ADDRESS *</label>
-                                    <input type="email" class="form-control bg-white" placeholder="john@example.com" required style="padding: 10px;">
+                                    <input type="email" class="form-control bg-white" placeholder="john@example.com" name="email" required style="padding: 10px;">
                                 </div>
                                 <!-- Phone -->
                                 <div class="col-md-6 col-12">
                                     <label class="form-label fw-bold small text-dark">PHONE NUMBER *</label>
-                                    <input type="tel" class="form-control bg-white" placeholder="(555) 000-0000" required style="padding: 10px;">
+                                    <input type="tel" class="form-control bg-white" placeholder="(555) 000-0000" name="phone" required style="padding: 10px;">
                                 </div>
                                 <!-- VIN -->
                                 <div class="col-md-6 col-12">
                                     <label class="form-label fw-bold small text-dark">VIN (VEHICLE ID NUMBER)</label>
-                                    <input type="text" class="form-control bg-white" placeholder="17-Digit VIN Code" style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="17-Digit VIN Code" name="vin" style="padding: 10px;">
                                 </div>
                                 
                                 <!-- Vehicle Selectors -->
                                 <div class="col-md-4 col-12">
                                     <label class="form-label fw-bold small text-dark">VEHICLE YEAR *</label>
-                                    <input type="text" class="form-control bg-white" placeholder="e.g. 2018" required style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="e.g. 2018" name="year" required style="padding: 10px;">
                                 </div>
                                 <div class="col-md-4 col-12">
                                     <label class="form-label fw-bold small text-dark">VEHICLE MAKE *</label>
-                                    <input type="text" class="form-control bg-white" placeholder="e.g. Ford" required style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="e.g. Ford" name="make" required style="padding: 10px;">
                                 </div>
                                 <div class="col-md-4 col-12">
                                     <label class="form-label fw-bold small text-dark">VEHICLE MODEL *</label>
-                                    <input type="text" class="form-control bg-white" placeholder="e.g. F-150" required style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="e.g. F-150" name="model" required style="padding: 10px;">
                                 </div>
 
                                 <!-- Part Name -->
                                 <div class="col-12">
                                     <label class="form-label fw-bold small text-dark">PART(S) REQUESTED *</label>
-                                    <input type="text" class="form-control bg-white" placeholder="e.g. Engine Assembly, Driver Side Headlight" required style="padding: 10px;">
+                                    <input type="text" class="form-control bg-white" placeholder="e.g. Engine Assembly, Driver Side Headlight" name="part_requested" required style="padding: 10px;">
                                 </div>
 
                                 <!-- Message -->
                                 <div class="col-12">
                                     <label class="form-label fw-bold small text-dark">ADDITIONAL NOTES (CONDITION OR PREFERENCES)</label>
-                                    <textarea class="form-control bg-white" rows="4" placeholder="Any details like trim, engine size (e.g., 2.5L), transmission type, or shipping address..." style="padding: 10px;"></textarea>
+                                    <textarea class="form-control bg-white" rows="4" placeholder="Any details like trim, engine size (e.g., 2.5L), transmission type, or shipping address..." name="notes" style="padding: 10px;"></textarea>
                                 </div>
 
                                 <!-- Submit -->
@@ -172,3 +175,85 @@
     @include('frontend.components.cta')
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('contactForm');
+    const alertBox = document.getElementById('contactAlert');
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Reset alert
+            alertBox.classList.add('d-none');
+            alertBox.classList.remove('alert-success', 'alert-danger');
+            alertBox.innerHTML = '';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i> Submitting...';
+
+            const formData = new FormData(form);
+
+            fetch('{{ route("contact.submit") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.status === 422) {
+                    return response.json().then(errData => {
+                        let errorMsg = errData.message || 'Validation failed.';
+                        if (errData.errors) {
+                            errorMsg += '<ul class="mb-0 mt-2 text-start">';
+                            Object.values(errData.errors).forEach(errArray => {
+                                errArray.forEach(err => {
+                                    errorMsg += `<li>${err}</li>`;
+                                });
+                            });
+                            errorMsg += '</ul>';
+                        }
+                        throw new Error(errorMsg);
+                    });
+                }
+                if (!response.ok) {
+                    throw new Error('An error occurred. Please try again.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+
+                if (data.success) {
+                    alertBox.classList.remove('d-none');
+                    alertBox.classList.add('alert-success');
+                    alertBox.innerHTML = data.message;
+                    form.reset();
+                    // Scroll to top of form so user sees success message
+                    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    alertBox.classList.remove('d-none');
+                    alertBox.classList.add('alert-danger');
+                    alertBox.innerHTML = data.message || 'An error occurred. Please try again.';
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                alertBox.classList.remove('d-none');
+                alertBox.classList.add('alert-danger');
+                alertBox.innerHTML = error.message || 'A connection error occurred. Please try again.';
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>
+@endpush
