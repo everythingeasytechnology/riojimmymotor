@@ -95,6 +95,9 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\SettingController;
 
+// Redirect /admin to /admin/dashboard (which triggers login if unauthenticated)
+Route::redirect('/admin', '/admin/dashboard');
+
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     // Main Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

@@ -312,9 +312,12 @@
                             <li><a class="dropdown-menu-item dropdown-item small" href="{{ route('admin.settings.index') }}"><i class="fa fa-shield me-2"></i>Security Logs</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-menu-item dropdown-item small text-danger" href="#" onclick="event.preventDefault(); alert('Log out complete (Mockup)');">
+                                <a class="dropdown-menu-item dropdown-item small text-danger" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                     <i class="fa fa-sign-out-alt me-2"></i> Log Out
                                 </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
                             </li>
                         </ul>
                     </div>
