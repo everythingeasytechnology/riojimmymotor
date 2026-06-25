@@ -147,7 +147,7 @@
                                         Out of Stock
                                     </button>
                                 @endif
-                                <a href="tel:+18005550199" class="btn btn-primary w-100 py-2 font-poppins text-white">
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteSettings->get('contact_phone', '+18005550199')) }}" class="btn btn-primary w-100 py-2 font-poppins text-white">
                                     <i class="fa fa-phone me-2"></i> Order by Phone
                                 </a>
                                 <span class="text-muted small d-block text-center mt-1" style="font-size: 11px;">CALL NOW FOR INSTANT DISCOUNTS</span>
@@ -180,19 +180,29 @@
                         <h5 class="fw-bold mb-2 text-dark">Request A Direct Price Quote</h5>
                         <p class="text-muted small mb-3">Provide your email or phone below. We will send a formal quote details sheet within 15 minutes.</p>
                         
-                        <form onsubmit="event.preventDefault(); alert('Your part quote inquiry has been submitted! One of our specialists will call/email you in 15 minutes.');">
+                        <div id="quoteAlert" class="alert d-none mt-2 small py-2.5"></div>
+
+                        <form id="quoteRequestForm" method="POST">
+                            @csrf
+                            <!-- Hidden validation fields matching HomeController@submitContact schema -->
+                            <input type="hidden" name="part_requested" value="{{ $product->name }}">
+                            <input type="hidden" name="make" value="{{ $product->brand ?? 'OEM' }}">
+                            <input type="hidden" name="model" value="{{ $product->name }}">
+                            <input type="hidden" name="year" value="{{ !empty($product->compatibility) && is_array($product->compatibility) ? ($product->compatibility[0]['year'] ?? 'N/A') : 'N/A' }}">
+                            <input type="hidden" name="notes" value="Direct quote request for SKU: {{ $product->sku }} Sourced at: {{ url()->current() }}">
+
                             <div class="row g-2">
                                 <div class="col-md-6 col-12">
-                                    <input type="text" class="form-control bg-white form-control-sm py-2" placeholder="Full Name" required style="padding: 10px;">
+                                    <input type="text" name="name" class="form-control bg-white form-control-sm py-2" placeholder="Full Name" required style="padding: 10px;">
                                 </div>
                                 <div class="col-md-6 col-12">
-                                    <input type="email" class="form-control bg-white form-control-sm py-2" placeholder="Email Address" required style="padding: 10px;">
+                                    <input type="email" name="email" class="form-control bg-white form-control-sm py-2" placeholder="Email Address" required style="padding: 10px;">
                                 </div>
                                 <div class="col-md-6 col-12">
-                                    <input type="tel" class="form-control bg-white form-control-sm py-2" placeholder="Phone Number" required style="padding: 10px;">
+                                    <input type="tel" name="phone" class="form-control bg-white form-control-sm py-2" placeholder="Phone Number" required style="padding: 10px;">
                                 </div>
                                 <div class="col-md-6 col-12">
-                                    <input type="text" class="form-control bg-white form-control-sm py-2" placeholder="17-Digit Vehicle VIN Code" style="padding: 10px;">
+                                    <input type="text" name="vin" class="form-control bg-white form-control-sm py-2" placeholder="17-Digit Vehicle VIN Code" style="padding: 10px;">
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-secondary w-100 py-2 mt-2 font-poppins text-white">
@@ -329,3 +339,83 @@
     @include('frontend.components.cta')
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const quoteForm = document.getElementById('quoteRequestForm');
+    const quoteAlert = document.getElementById('quoteAlert');
+
+    if (quoteForm) {
+        quoteForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Reset alert state
+            quoteAlert.classList.add('d-none');
+            quoteAlert.classList.remove('alert-success', 'alert-danger');
+            quoteAlert.innerHTML = '';
+
+            const submitBtn = quoteForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i> Submitting...';
+
+            const formData = new FormData(quoteForm);
+
+            fetch('{{ route("contact.submit") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.status === 422) {
+                    return response.json().then(errData => {
+                        let errorMsg = errData.message || 'Validation failed.';
+                        if (errData.errors) {
+                            errorMsg += '<ul class="mb-0 mt-2 text-start">';
+                            Object.values(errData.errors).forEach(errArray => {
+                                errArray.forEach(err => {
+                                    errorMsg += `<li>${err}</li>`;
+                                });
+                            });
+                            errorMsg += '</ul>';
+                        }
+                        throw new Error(errorMsg);
+                    });
+                }
+                if (!response.ok) {
+                    throw new Error('An error occurred. Please try again.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+
+                if (data.success) {
+                    quoteAlert.classList.remove('d-none');
+                    quoteAlert.classList.add('alert-success');
+                    quoteAlert.innerHTML = data.message;
+                    quoteForm.reset();
+                } else {
+                    quoteAlert.classList.remove('d-none');
+                    quoteAlert.classList.add('alert-danger');
+                    quoteAlert.innerHTML = data.message || 'An error occurred. Please try again.';
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                quoteAlert.classList.remove('d-none');
+                quoteAlert.classList.add('alert-danger');
+                quoteAlert.innerHTML = error.message || 'A connection error occurred. Please try again.';
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>
+@endpush

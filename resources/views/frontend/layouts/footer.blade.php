@@ -4,7 +4,7 @@
         <div class="row g-4">
             
             <!-- Company Info Column -->
-            <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
                 <a href="{{ url('/') }}" class="text-decoration-none">
                     <img src="{{ $siteSettings->get('site_logo') ? asset($siteSettings->get('site_logo')) : asset('frontend/images/riojimmymotorLogo.webp') }}" alt="{{ $siteSettings->get('site_name', 'Rio Jimmy Motor') }} Logo" class="mb-3" style="height: 50px; object-fit: contain;">
                 </a>
@@ -29,8 +29,19 @@
                 </ul>
             </div>
 
+            <!-- Policies Column -->
+            <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                <h5>Our Policies</h5>
+                <ul class="footer-links">
+                    <li><a href="{{ url('/privacy-policy') }}">Privacy Policy</a></li>
+                    <li><a href="{{ url('/return-refund') }}">Return & Refund</a></li>
+                    <li><a href="{{ url('/terms-conditions') }}">Terms & Conditions</a></li>
+                    <li><a href="{{ url('/warranty-policy') }}">Warranty Policy</a></li>
+                </ul>
+            </div>
+
             <!-- Categories Column -->
-            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+            <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
                 <h5>Popular Categories</h5>
                 <ul class="footer-links">
                     <li><a href="{{ url('/parts?category=engines') }}">Used Engines</a></li>
@@ -59,7 +70,7 @@
                 <ul class="list-unstyled text-white-50">
                     <li class="mb-2"><i class="fa fa-map-marker-alt text-danger me-2"></i> {{ $siteSettings->get('office_address', '100 Industrial Pkwy, Detroit, MI 48201') }}</li>
                     <li class="mb-2"><i class="fa fa-phone-alt text-danger me-2"></i> <a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteSettings->get('contact_phone', '+18005550199')) }}" class="text-white-50 text-decoration-none">{{ $siteSettings->get('contact_phone', '+1 (800) 555-0199') }}</a></li>
-                    <li><i class="fa fa-envelope text-danger me-2"></i> <a href="mailto:{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}" class="text-white-50 text-decoration-none">{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}</a></li>
+                    <li><i class="fa fa-envelope text-danger me-2"></i> <a href="mailto:{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}" class="text-white-50 text-decoration-none">{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}</a></li>
                 </ul>
             </div>
 
@@ -73,8 +84,8 @@
                 </div>
                 <div class="col-md-6 text-md-end">
                     <ul class="list-inline m-0 text-white-50">
-                        <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none me-3">Privacy Policy</a></li>
-                        <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none">Terms of Service</a></li>
+                        <li class="list-inline-item"><a href="{{ url('/privacy-policy') }}" class="text-white-50 text-decoration-none me-3">Privacy Policy</a></li>
+                        <li class="list-inline-item"><a href="{{ url('/terms-conditions') }}" class="text-white-50 text-decoration-none">Terms of Service</a></li>
                     </ul>
                 </div>
             </div>

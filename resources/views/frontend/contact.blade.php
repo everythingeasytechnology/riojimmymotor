@@ -1,7 +1,7 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'Contact Our Used Parts Experts | ' . $siteSettings->get('site_name', 'Auto Parts Marketplace'))
-@section('meta_description', 'Contact ' . $siteSettings->get('site_name', 'Auto Parts Marketplace') . ' for help locating a used engine, transmission, or body panel. Speak to a live specialist at ' . $siteSettings->get('contact_phone', '+1 (800) 555-0199') . '.')
+@section('meta_title', 'Contact Our Used Parts Experts | ' . $siteSettings->get('site_name', 'Rio Jimmy Motor'))
+@section('meta_description', 'Contact ' . $siteSettings->get('site_name', 'Rio Jimmy Motor') . ' for help locating a used engine, transmission, or body panel. Speak to a live specialist at ' . $siteSettings->get('contact_phone', '+1 (800) 555-0199') . '.')
 
 @section('content')
 
@@ -48,7 +48,7 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1">Email Inquiries</h5>
-                            <p class="mb-0 text-dark fw-bold"><a href="mailto:{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}" class="text-dark text-decoration-none">{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}</a></p>
+                            <p class="mb-0 text-dark fw-bold"><a href="mailto:{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}" class="text-dark text-decoration-none">{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}</a></p>
                             <span class="text-muted small">Standard response within 2 business hours</span>
                         </div>
                     </div>

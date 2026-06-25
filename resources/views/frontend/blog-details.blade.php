@@ -1,6 +1,6 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'What to Check Before Buying a Used Engine Online | Auto Parts Marketplace')
+@section('meta_title', 'What to Check Before Buying a Used Engine Online | Rio Jimmy Motor')
 @section('meta_description', 'Avoid online engine buying scams. Learn how to verify compression ratings, mileage codes, cylinder leaks, and OEM numbers before purchase.')
 
 @section('content')
@@ -104,7 +104,7 @@
                         <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop" alt="Richard Cooper" class="author-img border-danger border-2">
                         <div>
                             <h4 class="fw-bold mb-2">Richard Cooper (ASE Master Tech)</h4>
-                            <p class="text-muted mb-0">Richard has over 18 years of mechanical repair experience. He specializes in engine building, drivetrain diagnostics, and OEM salvage cross-referencing. He regularly reviews parts intake standards at Auto Parts Marketplace.</p>
+                            <p class="text-muted mb-0">Richard has over 18 years of mechanical repair experience. He specializes in engine building, drivetrain diagnostics, and OEM salvage cross-referencing. He regularly reviews parts intake standards at Rio Jimmy Motor.</p>
                         </div>
                     </div>
 
@@ -281,7 +281,7 @@
       },
       "publisher": {
         "@@type": "Organization",
-        "name": "Auto Parts Marketplace",
+        "name": "Rio Jimmy Motor",
         "logo": {
           "@@type": "ImageObject",
           "url": "{{ asset('frontend/images/riojimmymotorLogo.webp') }}"

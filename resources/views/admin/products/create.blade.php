@@ -90,7 +90,7 @@
 
                     <div class="col-12">
                         <label class="form-label small fw-bold">DESCRIPTION</label>
-                        <textarea class="form-control" name="description" rows="4" placeholder="Enter detailed part condition description..."></textarea>
+                        <textarea class="form-control" id="description-editor" name="description" rows="4" placeholder="Enter detailed part condition description..."></textarea>
                     </div>
                 </div>
             </div>
@@ -151,7 +151,7 @@
                     </div>
                     <div class="col-md-6 col-12">
                         <label class="form-label small fw-bold">CANONICAL URL</label>
-                        <input type="text" class="form-control" name="canonical_url" placeholder="https://autopartsmarket.com/parts/...">
+                        <input type="text" class="form-control" name="canonical_url" placeholder="https://riojimmymotor.com/parts/...">
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-bold">META KEYWORDS</label>
@@ -180,8 +180,25 @@
 @endsection
 
 @push('admin-scripts')
+    <!-- CKEditor 5 Classic CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <style>
+        .ck-editor__editable_inline {
+            min-height: 250px;
+            color: #000000;
+        }
+    </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize CKEditor for Product Description
+            ClassicEditor
+                .create(document.querySelector('#description-editor'), {
+                    toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo' ]
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+
             // Specs Builder
             const specsContainer = document.getElementById('specsContainer');
             const addSpecBtn = document.getElementById('addSpecBtn');

@@ -14,9 +14,9 @@ class SeoController extends Controller
     public function index()
     {
         $seo_settings = [
-            'meta_title' => Setting::getValue('seo_meta_title', 'Auto Parts Marketplace | Certified Used OEM Parts'),
+            'meta_title' => Setting::getValue('seo_meta_title', 'Rio Jimmy Motor | Certified Used OEM Parts'),
             'meta_description' => Setting::getValue('seo_meta_description', 'Find high-quality used engines, transmissions, headlights and wheels with free shipping.'),
-            'canonical_url' => Setting::getValue('seo_canonical_url', 'https://autopartsmarket.com'),
+            'canonical_url' => Setting::getValue('seo_canonical_url', 'https://riojimmymotor.com'),
             'robots_meta' => Setting::getValue('seo_robots_meta', 'index, follow'),
             'schema_organization' => Setting::getValue('seo_schema_organization', '{}'),
             'schema_local_business' => Setting::getValue('seo_schema_local_business', '{}')

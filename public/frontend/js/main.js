@@ -1,5 +1,5 @@
 /**
- * Auto Parts Marketplace Custom Javascript
+ * Rio Jimmy Motor Custom Javascript
  */
 
 document.addEventListener('DOMContentLoaded', function () {

@@ -1,6 +1,6 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'Used Car Buying Guides & Repair Articles | Auto Parts Marketplace')
+@section('meta_title', 'Used Car Buying Guides & Repair Articles | Rio Jimmy Motor')
 @section('meta_description', 'Read tips on inspecting engines, transmissions, headlights, wheels, and body parts. Sourcing guides and automotive advice written by mechanics.')
 
 @section('content')

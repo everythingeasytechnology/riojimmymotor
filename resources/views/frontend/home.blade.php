@@ -1,6 +1,6 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'Used Auto Parts & Salvage OEM Parts | Auto Parts Marketplace')
+@section('meta_title', 'Used Auto Parts & Salvage OEM Parts | Rio Jimmy Motor')
 @section('meta_description', 'Search and buy high-quality used engines, transmissions, headlights, wheels, and body parts. Standard free nationwide shipping and warranty on certified OEM parts.')
 
 @section('content')
@@ -61,7 +61,7 @@
             <div class="row mb-5">
                 <div class="col-lg-6 mx-auto text-center">
                     <span class="text-danger fw-bold text-uppercase small" style="letter-spacing: 2px;">Ordering Process</span>
-                    <h2 class="mt-2 fw-700">How Auto Parts Marketplace Works</h2>
+                    <h2 class="mt-2 fw-700">How Rio Jimmy Motor Works</h2>
                     <p class="text-muted">Buying high-quality salvage and OEM used parts is easy with our 3-step search-and-ship method.</p>
                 </div>
             </div>
@@ -191,7 +191,7 @@
             <div class="row align-items-center">
                 <!-- Image Side -->
                 <div class="col-lg-6 mb-5 mb-lg-0">
-                    <img src="https://images.unsplash.com/photo-1486006920555-c77dce18193b?q=80&w=800&auto=format&fit=crop" alt="Auto Parts Warehouse" class="img-fluid rounded shadow-sm">
+                    <img src="https://images.unsplash.com/photo-1507136566006-cfc505b114fc?q=80&w=800&auto=format&fit=crop" alt="Auto Parts Warehouse" class="img-fluid rounded shadow-sm">
                 </div>
                 <!-- Content Side -->
                 <div class="col-lg-6 ps-lg-5">

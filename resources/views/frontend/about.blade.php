@@ -1,7 +1,7 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'About Our Salvage Sourcing Yard Networks | Auto Parts Marketplace')
-@section('meta_description', 'Learn how Auto Parts Marketplace works with over 250 certified salvage yards to source tested OEM engines, transmissions, and body parts.')
+@section('meta_title', 'About Our Salvage Sourcing Yard Networks | Rio Jimmy Motor')
+@section('meta_description', 'Learn how Rio Jimmy Motor works with over 250 certified salvage yards to source tested OEM engines, transmissions, and body parts.')
 
 @section('content')
 
@@ -26,7 +26,7 @@
                 <div class="col-lg-6">
                     <span class="text-danger fw-bold text-uppercase small" style="letter-spacing: 2px;">Our Journey</span>
                     <h1 class="mt-2 mb-4 fw-800 text-dark" style="font-size: 38px;">Rebuilding Vehicles, Reducing Waste Since 2015</h1>
-                    <p class="lead">Auto Parts Marketplace was founded with a singular, clear goal: to make purchasing high-quality, original manufacturer (OEM) used auto parts simple, transparent, and affordable.</p>
+                    <p class="lead">Rio Jimmy Motor was founded with a singular, clear goal: to make purchasing high-quality, original manufacturer (OEM) used auto parts simple, transparent, and affordable.</p>
                     <p class="text-muted">Traditionally, sourcing a replacement engine, transmission, or collision panel from a salvage yard involved calling around, negotiating prices, and hoping the part worked. We changed that by connecting nationwide inventories into a single searchable marketplace, backed by certified quality inspections and a standard 90-day warranty.</p>
                     <p class="text-muted">Today, we represent a network of over 250+ vetted dismantle yards across North America, servicing thousands of vehicle owners, independent mechanics, and large-scale collision centers every single month.</p>
                 </div>
@@ -34,7 +34,7 @@
                 <!-- Story Graphics -->
                 <div class="col-lg-6">
                     <div class="position-relative">
-                        <img src="https://images.unsplash.com/photo-1486006920555-c77dce18193b?q=80&w=800&auto=format&fit=crop" alt="Car Maintenance Mechanic" class="img-fluid rounded shadow-sm">
+                        <img src="https://images.unsplash.com/photo-1517524008697-84babd908191?q=80&w=800&auto=format&fit=crop" alt="Car Maintenance Mechanic" class="img-fluid rounded shadow-sm">
                         <div class="bg-danger text-white rounded p-4 position-absolute d-none d-md-block" style="bottom: -30px; left: -30px; max-width: 280px; box-shadow: 0 10px 30px rgba(217,30,24,0.3);">
                             <h4 class="fw-bold mb-2">10+ Years</h4>
                             <p class="m-0 small text-white-50">Providing tested and certified pre-owned automotive components to drivers nationwide.</p>

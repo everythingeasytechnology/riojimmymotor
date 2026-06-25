@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Admin Dashboard | Auto Parts Marketplace</title>
+    <title>Admin Dashboard | Rio Jimmy Motor</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('frontend/images/favicon-32x32.png') }}">
+    <link rel="shortcut icon" href="{{ asset('frontend/images/favicon-32x32.png') }}" type="image/x-icon">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

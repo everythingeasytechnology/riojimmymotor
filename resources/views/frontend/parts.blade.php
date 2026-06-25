@@ -1,6 +1,6 @@
 @extends('frontend.layouts.master')
 
-@section('meta_title', 'Find Certified Used OEM Auto Parts | Auto Parts Marketplace')
+@section('meta_title', 'Find Certified Used OEM Auto Parts | Rio Jimmy Motor')
 @section('meta_description', 'Browse our inventory of high-quality pre-tested engines, transmissions, headlights, wheels, body parts and more. Fast free shipping across the US.')
 
 @section('content')

@@ -42,6 +42,20 @@ Route::get('/contact', function () {
 });
 Route::post('/contact', [HomeController::class, 'submitContact'])->name('contact.submit');
 
+// Policy Pages — placeholder views to be filled with user content
+Route::get('/privacy-policy', function () {
+    return view('frontend.privacy-policy');
+});
+Route::get('/return-refund', function () {
+    return view('frontend.return-refund');
+});
+Route::get('/terms-conditions', function () {
+    return view('frontend.terms-conditions');
+});
+Route::get('/warranty-policy', function () {
+    return view('frontend.warranty-policy');
+});
+
 // Parts Catalog — supports ?category, ?make, ?part_name, ?sort, ?min_price, ?max_price filters
 Route::get('/parts', [PartsController::class, 'index']);
 

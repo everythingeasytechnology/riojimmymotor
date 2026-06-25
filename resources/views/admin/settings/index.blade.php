@@ -109,7 +109,7 @@
 
                     <div class="col-md-6 col-12">
                         <label class="form-label small fw-bold text-muted">SMTP USERNAME</label>
-                        <input type="text" class="form-control" placeholder="postmaster@autopartsmarket.com" readonly>
+                        <input type="text" class="form-control" placeholder="postmaster@riojimmymotor.com" readonly>
                     </div>
                     <div class="col-md-6 col-12">
                         <label class="form-label small fw-bold text-muted">SMTP PASSWORD</label>
@@ -118,11 +118,11 @@
                     
                     <div class="col-md-6 col-12">
                         <label class="form-label small fw-bold text-muted">MAIL SENDER EMAIL ADDRESS</label>
-                        <input type="email" class="form-control" placeholder="no-reply@autopartsmarket.com" readonly>
+                        <input type="email" class="form-control" placeholder="no-reply@riojimmymotor.com" readonly>
                     </div>
                     <div class="col-md-6 col-12">
                         <label class="form-label small fw-bold text-muted">MAIL SENDER DISPLAY NAME</label>
-                        <input type="text" class="form-control" placeholder="Auto Parts Marketplace Notifications" readonly>
+                        <input type="text" class="form-control" placeholder="Rio Jimmy Motor Notifications" readonly>
                     </div>
                 </div>
             </div>
@@ -148,14 +148,14 @@
                         <tbody>
                             <tr>
                                 <td><i class="fa fa-circle-check text-success me-2"></i>Admin Dashboard Login</td>
-                                <td>superadmin@autopartsmarket.com</td>
+                                <td>superadmin@riojimmymotor.com</td>
                                 <td><code>192.168.1.45</code></td>
                                 <td>2026-06-22 13:42:01</td>
                                 <td><span class="badge bg-success-subtle text-success border border-success-subtle">Success</span></td>
                             </tr>
                             <tr>
                                 <td><i class="fa fa-key text-warning me-2"></i>Password Key Update Attempt</td>
-                                <td>support-agent@autopartsmarket.com</td>
+                                <td>support-agent@riojimmymotor.com</td>
                                 <td><code>74.125.19.147</code></td>
                                 <td>2026-06-21 09:15:30</td>
                                 <td><span class="badge bg-success-subtle text-success border border-success-subtle">Success</span></td>

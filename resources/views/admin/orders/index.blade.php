@@ -8,7 +8,6 @@
             <h2 class="fw-bold m-0" style="font-size: 28px;">Order Management</h2>
             <span class="text-muted small">Monitor purchase transactions and change shipping statuses.</span>
         </div>
-        <button class="btn btn-sm btn-outline-secondary" onclick="alert('Exporting orders CSV (Mockup)')"><i class="fa fa-file-export me-1"></i> Export Orders</button>
     </div>
 
     <!-- Filter & Search Panel -->

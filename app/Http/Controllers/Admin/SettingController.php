@@ -14,9 +14,9 @@ class SettingController extends Controller
     public function index()
     {
         $settings = [
-            'site_name' => Setting::getValue('site_name', 'Auto Parts Marketplace'),
+            'site_name' => Setting::getValue('site_name', 'Rio Jimmy Motor'),
             'contact_phone' => Setting::getValue('contact_phone', '+1 (800) 555-0199'),
-            'contact_email' => Setting::getValue('contact_email', 'support@autopartsmarket.com'),
+            'contact_email' => Setting::getValue('contact_email', 'support@riojimmymotor.com'),
             'office_address' => Setting::getValue('office_address', '100 Industrial Pkwy, Detroit, MI 48201'),
             'business_hours' => Setting::getValue('business_hours', 'Mon - Sat: 8:00 AM - 6:00 PM EST'),
             'google_analytics_id' => Setting::getValue('google_analytics_id', ''),

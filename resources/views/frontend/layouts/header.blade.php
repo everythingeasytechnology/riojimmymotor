@@ -4,7 +4,7 @@
         <div class="row align-items-center">
             <div class="col-md-6">
                 <span class="me-3"><i class="fa fa-phone text-danger me-2"></i> Call Free: <a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteSettings->get('contact_phone', '+18005550199')) }}" class="fw-bold">{{ $siteSettings->get('contact_phone', '+1 (800) 555-0199') }}</a></span>
-                <span><i class="fa fa-envelope text-danger me-2"></i> <a href="mailto:{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}">{{ $siteSettings->get('contact_email', 'support@autopartsmarket.com') }}</a></span>
+                <span><i class="fa fa-envelope text-danger me-2"></i> <a href="mailto:{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}">{{ $siteSettings->get('contact_email', 'support@riojimmymotor.com') }}</a></span>
             </div>
             <div class="col-md-6 text-end">
                 <span class="me-3"><i class="fa fa-clock me-2 text-danger"></i> {{ $siteSettings->get('business_hours', 'Mon - Sat: 8:00 AM - 6:00 PM EST') }}</span>

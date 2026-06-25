@@ -69,40 +69,7 @@
         </div>
     </div>
 
-    <!-- Charts row -->
-    <div class="row g-4 mb-4">
-        <!-- Revenue & Orders Chart -->
-        <div class="col-xl-8 col-12">
-            <div class="admin-card h-100">
-                <div class="admin-card-header">
-                    <span><i class="fa fa-chart-line text-danger me-2"></i>Revenue & Orders Overview</span>
-                    <div class="btn-group btn-group-sm border">
-                        <button class="btn btn-light active">Monthly</button>
-                        <button class="btn btn-light" onclick="alert('Weekly data filter (Mockup)')">Weekly</button>
-                    </div>
-                </div>
-                <div class="admin-card-body">
-                    <div style="height: 300px; width: 100%;">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Traffic Share Chart -->
-        <div class="col-xl-4 col-12">
-            <div class="admin-card h-100">
-                <div class="admin-card-header">
-                    <span><i class="fa fa-chart-pie text-danger me-2"></i>Traffic Sourced</span>
-                </div>
-                <div class="admin-card-body">
-                    <div style="height: 300px; width: 100%;">
-                        <canvas id="trafficChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Activity Lists row -->
     <div class="row g-4">
@@ -224,67 +191,4 @@
 
 @endsection
 
-@push('admin-scripts')
-    <!-- ChartJS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // 1. Revenue Chart
-            const ctxRev = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctxRev, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: 'Monthly Revenue ($)',
-                        data: [15000, 18000, 24000, 29000, 35000, 42000, 48000, 52000, 58000, 68000, 85000, 124500],
-                        borderColor: '#d91e18',
-                        backgroundColor: 'rgba(217, 30, 24, 0.05)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            grid: { color: 'rgba(0,0,0,0.03)' }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
 
-            // 2. Traffic Sourced Doughnut Chart
-            const ctxTraffic = document.getElementById('trafficChart').getContext('2d');
-            new Chart(ctxTraffic, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Organic Search', 'Direct Traffic', 'Google Ads', 'Social Media'],
-                    datasets: [{
-                        data: [55, 20, 15, 10],
-                        backgroundColor: ['#d91e18', '#111111', '#444444', '#888888'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 12, font: { family: 'Poppins' } }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-@endpush

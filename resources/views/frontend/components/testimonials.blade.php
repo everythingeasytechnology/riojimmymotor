@@ -7,7 +7,7 @@
             <div class="col-lg-6 mx-auto text-center">
                 <span class="text-danger fw-bold text-uppercase small" style="letter-spacing: 2px;">Customer Stories</span>
                 <h2 class="mt-2 fw-700">What Our Customers Are Saying</h2>
-                <p class="text-muted">Over 10,000+ vehicle owners, mechanics, and shops trust Auto Parts Marketplace for high-quality OEM salvage parts.</p>
+                <p class="text-muted">Over 10,000+ vehicle owners, mechanics, and shops trust Rio Jimmy Motor for high-quality OEM salvage parts.</p>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star"></i>
                     </div>
-                    <p class="testimonial-content">"Found an OEM headlight assembly for my Ford F-150 here. The local dealership quoted me $850, but Auto Parts Marketplace had it for $240. The lens was clean, tabs were intact, and it was a direct plug-and-play replacement. Highly recommend!"</p>
+                    <p class="testimonial-content">"Found an OEM headlight assembly for my Ford F-150 here. The local dealership quoted me $850, but Rio Jimmy Motor had it for $240. The lens was clean, tabs were intact, and it was a direct plug-and-play replacement. Highly recommend!"</p>
                     <div class="testimonial-user">
                         <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop" alt="Sarah M." class="testimonial-user-img">
                         <div>

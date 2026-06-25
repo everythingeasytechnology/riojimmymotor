@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('frontend/images/favicon-32x32.png') }}">
+    <link rel="shortcut icon" href="{{ asset('frontend/images/favicon-32x32.png') }}" type="image/x-icon">
+
     <!-- SEO Meta Tags -->
     <title>@yield('meta_title', $siteSettings->get('seo_meta_title', 'Used Auto Parts & Salvage OEM Parts | Rio Jimmy Motor'))</title>
     <meta name="description" content="@yield('meta_description', $siteSettings->get('seo_meta_description', 'Find high-quality used engines, transmissions, wheels, body parts, and more. Certified auto parts with nationwide shipping and warranty at the best prices.'))">

@@ -117,9 +117,9 @@ class DatabaseSeeder extends Seeder
 
         // 5. Seed Site Settings
         $defaultSettings = [
-            'site_name' => 'Auto Parts Marketplace',
+            'site_name' => 'Rio Jimmy Motor',
             'contact_phone' => '+1 (800) 555-0199',
-            'contact_email' => 'support@autopartsmarket.com',
+            'contact_email' => 'support@riojimmymotor.com',
             'office_address' => '100 Industrial Pkwy, Detroit, MI 48201',
             'business_hours' => 'Mon - Sat: 8:00 AM - 6:00 PM EST',
             'google_analytics_id' => 'G-TRACK12345',
@@ -182,7 +182,7 @@ class DatabaseSeeder extends Seeder
                     'slug' => Str::slug($subName),
                     'parent_id' => $cat->id,
                     'description' => $subName . ' category.',
-                    'meta_title' => $subName . ' | Auto Parts Marketplace'
+                    'meta_title' => $subName . ' | Rio Jimmy Motor'
                 ]);
             }
         }
