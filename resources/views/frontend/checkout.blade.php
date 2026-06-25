@@ -37,6 +37,14 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <h6 class="fw-bold"><i class="fa fa-triangle-exclamation me-2"></i>Error:</h6>
+                        <p class="mb-0">{{ session('error') }}</p>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
                 <div class="row g-3">
                     <!-- Email address -->
                     <div class="col-12">
