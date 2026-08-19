@@ -26,6 +26,13 @@ class PaymentController extends Controller
                 'key_id' => Setting::getValue('payment_razorpay_key', ''),
                 'key_secret' => Setting::getValue('payment_razorpay_secret', ''),
                 'mode' => Setting::getValue('payment_razorpay_mode', 'sandbox')
+            ],
+            'payglocal' => [
+                'enabled' => Setting::getValue('payment_payglocal_enabled', '0'),
+                'merchant_id' => Setting::getValue('payment_payglocal_merchant_id', ''),
+                'secret_key' => Setting::getValue('payment_payglocal_secret', ''),
+                'mode' => Setting::getValue('payment_payglocal_mode', 'sandbox'),
+                'base_url' => Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in')
             ]
         ];
 
@@ -52,6 +59,13 @@ class PaymentController extends Controller
         Setting::setValue('payment_razorpay_key', $request->razorpay_key_id);
         Setting::setValue('payment_razorpay_secret', $request->razorpay_key_secret);
         Setting::setValue('payment_razorpay_mode', $request->razorpay_mode);
+
+        // 3. PayGlocal config
+        Setting::setValue('payment_payglocal_enabled', $request->has('payglocal_enabled') ? '1' : '0');
+        Setting::setValue('payment_payglocal_merchant_id', $request->payglocal_merchant_id);
+        Setting::setValue('payment_payglocal_secret', $request->payglocal_secret_key);
+        Setting::setValue('payment_payglocal_mode', $request->payglocal_mode);
+        Setting::setValue('payment_payglocal_base_url', $request->payglocal_base_url ?: 'https://sandbox.payglocal.in');
 
         return redirect()->route('admin.payments.index')->with('success', 'Payment gateway configurations saved.');
     }

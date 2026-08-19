@@ -252,6 +252,23 @@
                         </div>
                         @endif
 
+                        <!-- PayGlocal Payment Option -->
+                        @if($siteSettings->get('payment_payglocal_enabled', '0') === '1')
+                        <div class="form-check mb-3 pt-2 border-top">
+                            <input class="form-check-input payment-radio" type="radio" name="payment_method" id="payment_payglocal" value="payglocal">
+                            <label class="form-check-label fw-bold text-dark d-flex align-items-center flex-wrap" for="payment_payglocal" style="cursor: pointer;">
+                                PayGlocal
+                                <span class="ms-2 d-inline-flex align-items-center">
+                                    <i class="fa fa-globe fs-4 text-danger"></i>
+                                </span>
+                            </label>
+
+                            <div class="mt-2 p-3 bg-white rounded border text-muted small d-none" id="payglocal-info-box">
+                                <i class="fa fa-shield-halved text-success me-1"></i> Pay securely through PayGlocal's international payment gateway.
+                            </div>
+                        </div>
+                        @endif
+
                         <!-- PayPal Payment Option -->
                         @if($siteSettings->get('payment_paypal_enabled', '0') === '1')
                         <div class="form-check mb-3 pt-2 border-top">
@@ -299,11 +316,13 @@
         const paymentRadios = document.querySelectorAll('.payment-radio');
         const razorpayInfoBox = document.getElementById('razorpay-info-box');
         const stripeInfoBox = document.getElementById('stripe-info-box');
+        const payglocalInfoBox = document.getElementById('payglocal-info-box');
         const paypalInfoBox = document.getElementById('paypal-info-box');
 
         function toggleInfoBoxes() {
             if (razorpayInfoBox) razorpayInfoBox.classList.add('d-none');
             if (stripeInfoBox) stripeInfoBox.classList.add('d-none');
+            if (payglocalInfoBox) payglocalInfoBox.classList.add('d-none');
             if (paypalInfoBox) paypalInfoBox.classList.add('d-none');
 
             const checkedRadio = document.querySelector('.payment-radio:checked');
@@ -312,6 +331,8 @@
                     razorpayInfoBox.classList.remove('d-none');
                 } else if (checkedRadio.value === 'stripe' && stripeInfoBox) {
                     stripeInfoBox.classList.remove('d-none');
+                } else if (checkedRadio.value === 'payglocal' && payglocalInfoBox) {
+                    payglocalInfoBox.classList.remove('d-none');
                 } else if (checkedRadio.value === 'paypal' && paypalInfoBox) {
                     paypalInfoBox.classList.remove('d-none');
                 }

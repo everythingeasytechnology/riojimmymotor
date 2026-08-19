@@ -97,7 +97,7 @@ class CheckoutController extends Controller
             'state' => 'required|string|max:255',
             'zip_code' => 'required|string|max:255',
             'phone' => 'required|string|max:255',
-            'payment_method' => 'required|in:stripe,razorpay',
+            'payment_method' => 'required|in:stripe,razorpay,payglocal',
             'order_notes' => 'nullable|string'
         ]);
 
@@ -130,6 +130,13 @@ class CheckoutController extends Controller
                 $razorpaySecret = Setting::getValue('payment_razorpay_secret', '');
                 if ($razorpayEnabled !== '1' || empty($razorpayKey) || empty($razorpaySecret)) {
                     return redirect()->back()->withInput()->with('error', 'Razorpay payment gateway is currently unavailable.');
+                }
+            } elseif ($paymentMethod === 'payglocal') {
+                $payglocalEnabled = Setting::getValue('payment_payglocal_enabled', '0');
+                $payglocalMerchantId = Setting::getValue('payment_payglocal_merchant_id', '');
+                $payglocalSecret = Setting::getValue('payment_payglocal_secret', '');
+                if ($payglocalEnabled !== '1' || empty($payglocalMerchantId) || empty($payglocalSecret)) {
+                    return redirect()->back()->withInput()->with('error', 'PayGlocal payment gateway is currently unavailable.');
                 }
             }
         }
@@ -167,7 +174,11 @@ class CheckoutController extends Controller
                     'tax' => $tax,
                     'total' => $total,
                     'status' => 'pending',
-                    'payment_method' => $paymentMethod === 'razorpay' ? 'Razorpay' : 'Stripe',
+                    'payment_method' => match ($paymentMethod) {
+                        'razorpay' => 'Razorpay',
+                        'payglocal' => 'PayGlocal',
+                        default => 'Stripe',
+                    },
                     'payment_status' => 'pending',
                     'refund_reason' => $request->order_notes
                 ]);
@@ -205,6 +216,9 @@ class CheckoutController extends Controller
                 if ($paymentMethod === 'stripe') {
                     $session = $this->createStripeSession($order, $cart);
                     return redirect()->away($session['url']);
+                } elseif ($paymentMethod === 'payglocal') {
+                    $payGlocalUrl = $this->createPayGlocalCheckout($order, $cart);
+                    return redirect()->away($payGlocalUrl);
                 } else {
                     $razorpayOrder = $this->createRazorpayOrder($order);
                     $keyId = Setting::getValue('payment_razorpay_key');
@@ -262,6 +276,22 @@ class CheckoutController extends Controller
                 session()->forget('cart');
             } else {
                 return redirect()->route('checkout')->with('error', 'Razorpay signature verification failed. Please try again.');
+            }
+        }
+        // Verify PayGlocal callback
+        elseif ($request->has('payglocal_transaction_id') || $request->has('transaction_id') || $request->has('payment_id')) {
+            $transactionId = $request->query('payglocal_transaction_id', $request->query('transaction_id', $request->query('payment_id')));
+            $status = strtolower((string) $request->query('status', ''));
+
+            if (!empty($transactionId) && (empty($status) || $status === 'success' || $status === 'paid')) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing',
+                    'transaction_id' => $transactionId
+                ]);
+                session()->forget('cart');
+            } else {
+                return redirect()->route('checkout')->with('error', 'PayGlocal payment verification failed. Please try again.');
             }
         }
         // Otherwise, parameters are missing
@@ -369,6 +399,67 @@ class CheckoutController extends Controller
         }
 
         return json_decode($response, true);
+    }
+
+    /**
+     * Create a PayGlocal checkout URL via cURL.
+     */
+    private function createPayGlocalCheckout(Order $order, array $cart)
+    {
+        $merchantId = Setting::getValue('payment_payglocal_merchant_id');
+        $secretKey = Setting::getValue('payment_payglocal_secret');
+        $baseUrl = Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in');
+
+        if (!$merchantId || !$secretKey) {
+            throw new \Exception('PayGlocal Merchant ID or Secret is not configured in settings.');
+        }
+
+        $postData = [
+            'merchant_id' => $merchantId,
+            'order_id' => $order->order_number,
+            'amount' => (float) $order->total,
+            'currency' => 'INR',
+            'customer_name' => $order->customer_name,
+            'customer_email' => $order->customer_email,
+            'customer_phone' => $order->customer_phone,
+            'return_url' => route('checkout.success', ['order' => $order->order_number]),
+            'cancel_url' => route('checkout') . '?cancel_order=' . $order->order_number,
+            'metadata' => [
+                'items' => array_map(fn ($item) => [
+                    'name' => $item['name'],
+                    'qty' => $item['quantity'],
+                    'price' => $item['price'],
+                ], $cart),
+            ],
+        ];
+
+        $ch = curl_init(rtrim($baseUrl, '/') . '/api/checkout/create');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $secretKey,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 && $httpCode !== 201) {
+            $err = json_decode($response, true);
+            $msg = $err['message'] ?? ($err['error'] ?? 'PayGlocal checkout creation failed');
+            throw new \Exception($msg);
+        }
+
+        $data = json_decode($response, true);
+        $checkoutUrl = $data['checkout_url'] ?? $data['payment_url'] ?? $data['redirect_url'] ?? $data['url'] ?? null;
+
+        if (!$checkoutUrl) {
+            throw new \Exception('PayGlocal checkout URL was not returned by the gateway.');
+        }
+
+        return $checkoutUrl;
     }
 
     /**

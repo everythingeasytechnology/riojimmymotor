@@ -78,7 +78,39 @@
                 </div>
             </div>
 
-
+            <!-- PayGlocal Config Column -->
+            <div class="col-lg-6 col-12">
+                <div class="admin-card h-100">
+                    <div class="admin-card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fa fa-globe text-danger me-2" style="font-size: 20px;"></i>PayGlocal Configs</span>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" name="payglocal_enabled" id="payglocal_enabled" value="1" {{ $gateways['payglocal']['enabled'] === '1' ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="payglocal_enabled">Active</label>
+                        </div>
+                    </div>
+                    <div class="admin-card-body text-dark">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">PAYGLOCAL MODE</label>
+                            <select class="form-select" name="payglocal_mode">
+                                <option value="sandbox" {{ $gateways['payglocal']['mode'] === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
+                                <option value="live" {{ $gateways['payglocal']['mode'] === 'live' ? 'selected' : '' }}>Live</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">MERCHANT ID</label>
+                            <input type="text" class="form-control" name="payglocal_merchant_id" value="{{ $gateways['payglocal']['merchant_id'] }}" placeholder="merchant_xxx">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">SECRET KEY</label>
+                            <input type="password" class="form-control" name="payglocal_secret_key" value="{{ $gateways['payglocal']['secret_key'] }}" placeholder="payglocal secret key">
+                        </div>
+                        <div>
+                            <label class="form-label small fw-bold">BASE URL</label>
+                            <input type="text" class="form-control" name="payglocal_base_url" value="{{ $gateways['payglocal']['base_url'] }}" placeholder="https://sandbox.payglocal.in">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
 

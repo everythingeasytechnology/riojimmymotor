@@ -200,6 +200,19 @@ class ExampleTest extends TestCase
         $response->assertSee('Front Bumper');
     }
 
+    public function test_admin_payment_manager_includes_payglocal_gateway(): void
+    {
+        $this->seed();
+        $admin = \App\Models\User::first();
+
+        $response = $this->actingAs($admin)->get('/admin/payments');
+
+        $response->assertStatus(200);
+        $response->assertSee('PayGlocal');
+        $response->assertSee('payglocal_enabled');
+    }
+    }
+
     public function test_admin_can_mark_lead_as_read(): void
     {
         $this->seed();
