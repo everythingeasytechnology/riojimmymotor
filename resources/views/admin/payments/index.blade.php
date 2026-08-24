@@ -88,25 +88,53 @@
                             <label class="form-check-label small" for="payglocal_enabled">Active</label>
                         </div>
                     </div>
-                    <div class="admin-card-body text-dark">
+                    <div class="admin-card-body text-dark" style="font-size: 0.9rem;">
+                        <div class="alert alert-info small mb-3">
+                            <strong>Setup Instructions:</strong> Download keys from PayGlocal GCC Dashboard (Configure → Key Management System), extract key IDs from filenames, and upload to storage/payments/payglocal/
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label small fw-bold">PAYGLOCAL MODE</label>
-                            <select class="form-select" name="payglocal_mode">
-                                <option value="sandbox" {{ $gateways['payglocal']['mode'] === 'sandbox' ? 'selected' : '' }}>Sandbox</option>
-                                <option value="live" {{ $gateways['payglocal']['mode'] === 'live' ? 'selected' : '' }}>Live</option>
+                            <select class="form-select form-select-sm" name="payglocal_mode">
+                                <option value="sandbox" {{ $gateways['payglocal']['mode'] === 'sandbox' ? 'selected' : '' }}>Sandbox (Test)</option>
+                                <option value="live" {{ $gateways['payglocal']['mode'] === 'live' ? 'selected' : '' }}>Live (Production)</option>
                             </select>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">MERCHANT ID</label>
-                            <input type="text" class="form-control" name="payglocal_merchant_id" value="{{ $gateways['payglocal']['merchant_id'] }}" placeholder="merchant_xxx">
+                            <label class="form-label small fw-bold">MERCHANT ID (MID)</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_merchant_id" value="{{ $gateways['payglocal']['merchant_id'] }}" placeholder="e.g., MID123456">
+                            <small class="form-text text-muted">From GCC → Profile → My Account → TID Details</small>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">SECRET KEY</label>
-                            <input type="password" class="form-control" name="payglocal_secret_key" value="{{ $gateways['payglocal']['secret_key'] }}" placeholder="payglocal secret key">
+                            <label class="form-label small fw-bold">PUBLIC KEY ID (from PayGlocal certificate filename)</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_public_key_id" value="{{ $gateways['payglocal']['public_key_id'] }}" placeholder="e.g., 834hinrh-8r0n-4657-34nn-fnjhjre33uur">
+                            <small class="form-text text-muted">Extract from public key .pem filename (text before first underscore)</small>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">PRIVATE KEY ID (from your RSA key filename)</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_private_key_id" value="{{ $gateways['payglocal']['private_key_id'] }}" placeholder="e.g., 884hiurh-8e0b-4907-38nn-fuerikejr89">
+                            <small class="form-text text-muted">Extract from private key .pem filename (text before first underscore)</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">PUBLIC KEY FILE PATH</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_public_key_path" value="{{ $gateways['payglocal']['public_key_path'] }}" placeholder="payments/payglocal/public.pem">
+                            <small class="form-text text-muted">Upload PayGlocal certificate to storage folder</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">PRIVATE KEY FILE PATH</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_private_key_path" value="{{ $gateways['payglocal']['private_key_path'] }}" placeholder="payments/payglocal/private.pem">
+                            <small class="form-text text-muted">Upload your RSA private key to storage folder</small>
+                        </div>
+
                         <div>
                             <label class="form-label small fw-bold">BASE URL</label>
-                            <input type="text" class="form-control" name="payglocal_base_url" value="{{ $gateways['payglocal']['base_url'] }}" placeholder="https://sandbox.payglocal.in">
+                            <input type="text" class="form-control form-control-sm" name="payglocal_base_url" value="{{ $gateways['payglocal']['base_url'] }}" placeholder="https://sandbox.payglocal.in">
+                            <small class="form-text text-muted">Leave empty for default (sandbox: https://sandbox.payglocal.in, live: https://api.payglocal.in)</small>
                         </div>
                     </div>
                 </div>

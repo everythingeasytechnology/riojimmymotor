@@ -29,9 +29,12 @@ class PaymentController extends Controller
             ],
             'payglocal' => [
                 'enabled' => Setting::getValue('payment_payglocal_enabled', '0'),
-                'merchant_id' => Setting::getValue('payment_payglocal_merchant_id', ''),
-                'secret_key' => Setting::getValue('payment_payglocal_secret', ''),
                 'mode' => Setting::getValue('payment_payglocal_mode', 'sandbox'),
+                'merchant_id' => Setting::getValue('payment_payglocal_merchant_id', ''),
+                'public_key_id' => Setting::getValue('payment_payglocal_public_key_id', ''),
+                'private_key_id' => Setting::getValue('payment_payglocal_private_key_id', ''),
+                'public_key_path' => Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem'),
+                'private_key_path' => Setting::getValue('payment_payglocal_private_key_path', 'payments/payglocal/private.pem'),
                 'base_url' => Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in')
             ]
         ];
@@ -62,9 +65,12 @@ class PaymentController extends Controller
 
         // 3. PayGlocal config
         Setting::setValue('payment_payglocal_enabled', $request->has('payglocal_enabled') ? '1' : '0');
-        Setting::setValue('payment_payglocal_merchant_id', $request->payglocal_merchant_id);
-        Setting::setValue('payment_payglocal_secret', $request->payglocal_secret_key);
         Setting::setValue('payment_payglocal_mode', $request->payglocal_mode);
+        Setting::setValue('payment_payglocal_merchant_id', $request->payglocal_merchant_id);
+        Setting::setValue('payment_payglocal_public_key_id', $request->payglocal_public_key_id);
+        Setting::setValue('payment_payglocal_private_key_id', $request->payglocal_private_key_id);
+        Setting::setValue('payment_payglocal_public_key_path', $request->payglocal_public_key_path ?: 'payments/payglocal/public.pem');
+        Setting::setValue('payment_payglocal_private_key_path', $request->payglocal_private_key_path ?: 'payments/payglocal/private.pem');
         Setting::setValue('payment_payglocal_base_url', $request->payglocal_base_url ?: 'https://sandbox.payglocal.in');
 
         return redirect()->route('admin.payments.index')->with('success', 'Payment gateway configurations saved.');

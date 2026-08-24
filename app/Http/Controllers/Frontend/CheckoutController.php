@@ -134,9 +134,10 @@ class CheckoutController extends Controller
             } elseif ($paymentMethod === 'payglocal') {
                 $payglocalEnabled = Setting::getValue('payment_payglocal_enabled', '0');
                 $payglocalMerchantId = Setting::getValue('payment_payglocal_merchant_id', '');
-                $payglocalSecret = Setting::getValue('payment_payglocal_secret', '');
-                if ($payglocalEnabled !== '1' || empty($payglocalMerchantId) || empty($payglocalSecret)) {
-                    return redirect()->back()->withInput()->with('error', 'PayGlocal payment gateway is currently unavailable.');
+                $payglocalPublicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
+                $payglocalPrivateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
+                if ($payglocalEnabled !== '1' || empty($payglocalMerchantId) || empty($payglocalPublicKeyId) || empty($payglocalPrivateKeyId)) {
+                    return redirect()->back()->withInput()->with('error', 'PayGlocal payment gateway is not properly configured.');
                 }
             }
         }
@@ -406,60 +407,39 @@ class CheckoutController extends Controller
      */
     private function createPayGlocalCheckout(Order $order, array $cart)
     {
-        $merchantId = Setting::getValue('payment_payglocal_merchant_id');
-        $secretKey = Setting::getValue('payment_payglocal_secret');
-        $baseUrl = Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in');
+        try {
+            $payGlocalService = new \App\Services\PayGlocalService();
 
-        if (!$merchantId || !$secretKey) {
-            throw new \Exception('PayGlocal Merchant ID or Secret is not configured in settings.');
+            $checkoutData = [
+                'order_id' => $order->order_number,
+                'amount' => (float) $order->total,
+                'currency' => 'USD',
+                'customer_name' => $order->customer_name,
+                'customer_email' => $order->customer_email,
+                'customer_phone' => $order->customer_phone,
+                'return_url' => route('checkout.success', ['order' => $order->order_number]),
+                'cancel_url' => route('checkout') . '?cancel_order=' . $order->order_number,
+                'metadata' => [
+                    'items' => array_map(fn ($item) => [
+                        'name' => $item['name'],
+                        'qty' => $item['quantity'],
+                        'price' => $item['price'],
+                    ], $cart),
+                ],
+            ];
+
+            $response = $payGlocalService->createCheckout($checkoutData);
+            
+            $checkoutUrl = $response['checkout_url'] ?? $response['payment_url'] ?? $response['redirect_url'] ?? $response['url'] ?? null;
+
+            if (!$checkoutUrl) {
+                throw new \Exception('PayGlocal checkout URL was not returned by the gateway.');
+            }
+
+            return $checkoutUrl;
+        } catch (\Exception $e) {
+            throw new \Exception('PayGlocal checkout error: ' . $e->getMessage());
         }
-
-        $postData = [
-            'merchant_id' => $merchantId,
-            'order_id' => $order->order_number,
-            'amount' => (float) $order->total,
-            'currency' => 'INR',
-            'customer_name' => $order->customer_name,
-            'customer_email' => $order->customer_email,
-            'customer_phone' => $order->customer_phone,
-            'return_url' => route('checkout.success', ['order' => $order->order_number]),
-            'cancel_url' => route('checkout') . '?cancel_order=' . $order->order_number,
-            'metadata' => [
-                'items' => array_map(fn ($item) => [
-                    'name' => $item['name'],
-                    'qty' => $item['quantity'],
-                    'price' => $item['price'],
-                ], $cart),
-            ],
-        ];
-
-        $ch = curl_init(rtrim($baseUrl, '/') . '/api/checkout/create');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $secretKey,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200 && $httpCode !== 201) {
-            $err = json_decode($response, true);
-            $msg = $err['message'] ?? ($err['error'] ?? 'PayGlocal checkout creation failed');
-            throw new \Exception($msg);
-        }
-
-        $data = json_decode($response, true);
-        $checkoutUrl = $data['checkout_url'] ?? $data['payment_url'] ?? $data['redirect_url'] ?? $data['url'] ?? null;
-
-        if (!$checkoutUrl) {
-            throw new \Exception('PayGlocal checkout URL was not returned by the gateway.');
-        }
-
-        return $checkoutUrl;
     }
 
     /**
