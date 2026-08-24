@@ -133,8 +133,8 @@
 
                         <div>
                             <label class="form-label small fw-bold">BASE URL</label>
-                            <input type="text" class="form-control form-control-sm" name="payglocal_base_url" value="{{ $gateways['payglocal']['base_url'] }}" placeholder="https://sandbox.payglocal.in">
-                            <small class="form-text text-muted">Leave empty for default (sandbox: https://sandbox.payglocal.in, live: https://api.payglocal.in)</small>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_base_url" value="{{ $gateways['payglocal']['base_url'] }}" placeholder="https://api.uat.payglocal.in">
+                            <small class="form-text text-muted">Leave empty for default (sandbox/UAT: https://api.uat.payglocal.in, live/production: https://api.prod.payglocal.in)</small>
                         </div>
                     </div>
                 </div>

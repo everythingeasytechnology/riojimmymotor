@@ -103,8 +103,8 @@ storage/payments/payglocal/public.pem
     - **Public Key File Path**: `payments/payglocal/public.pem`
     - **Private Key File Path**: `payments/payglocal/private.pem`
     - **Base URL**:
-        - Sandbox: `https://sandbox.payglocal.in`
-        - Live: `https://api.payglocal.in`
+    - Sandbox/UAT: `https://api.uat.payglocal.in`
+    - Live/Production: `https://api.prod.payglocal.in`
 5. Click **Save Payment Configs**
 
 ### 6. Set Environment Variables (Optional)
@@ -119,7 +119,7 @@ PAYGLOCAL_PUBLIC_KEY_ID=834hinrh-8r0n-4657-34nn-fnjhjre33uur
 PAYGLOCAL_PRIVATE_KEY_ID=884hiurh-8e0b-4907-38nn-fuerikejr89
 PAYGLOCAL_PUBLIC_KEY_PATH=payments/payglocal/public.pem
 PAYGLOCAL_PRIVATE_KEY_PATH=payments/payglocal/private.pem
-PAYGLOCAL_BASE_URL=https://sandbox.payglocal.in
+PAYGLOCAL_BASE_URL=https://api.uat.payglocal.in
 ```
 
 ## Key Security Notes

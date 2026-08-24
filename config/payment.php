@@ -9,7 +9,7 @@ return [
         'private_key_id' => env('PAYGLOCAL_PRIVATE_KEY_ID', ''),
         'public_key_path' => env('PAYGLOCAL_PUBLIC_KEY_PATH', 'payments/payglocal/public.pem'),
         'private_key_path' => env('PAYGLOCAL_PRIVATE_KEY_PATH', 'payments/payglocal/private.pem'),
-        'base_url' => env('PAYGLOCAL_BASE_URL', 'https://sandbox.payglocal.in'),
+        'base_url' => env('PAYGLOCAL_BASE_URL', 'https://api.uat.payglocal.in'),
     ],
 
     'stripe' => [

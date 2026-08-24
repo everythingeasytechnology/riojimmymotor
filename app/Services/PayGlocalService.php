@@ -16,6 +16,8 @@ class PayGlocalService
     private $privateKeyPath;   // Path to your private key
     private $baseUrl;
     private $mode;
+    private const UAT_BASE_URL = 'https://api.uat.payglocal.in';
+    private const PROD_BASE_URL = 'https://api.prod.payglocal.in';
 
     public function __construct()
     {
@@ -25,13 +27,33 @@ class PayGlocalService
         $this->privateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
         $this->publicKeyPath = Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem');
         $this->privateKeyPath = Setting::getValue('payment_payglocal_private_key_path', 'payments/payglocal/private.pem');
-        $this->baseUrl = Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in');
         $this->mode = Setting::getValue('payment_payglocal_mode', 'sandbox');
+        $this->baseUrl = $this->normalizeBaseUrl(
+            Setting::getValue('payment_payglocal_base_url', self::UAT_BASE_URL)
+        );
 
         // Validate required credentials
         if (!$this->merchantId || !$this->publicKeyId || !$this->privateKeyId) {
             throw new Exception('PayGlocal credentials are not properly configured. Please check Admin Panel → Payment Gateways → PayGlocal Configuration.');
         }
+    }
+
+    /**
+     * Map legacy or empty PayGlocal base URLs to the current official API hosts.
+     */
+    private function normalizeBaseUrl(?string $baseUrl): string
+    {
+        $baseUrl = rtrim(trim((string) $baseUrl), '/');
+
+        if ($baseUrl === '') {
+            return $this->mode === 'live' ? self::PROD_BASE_URL : self::UAT_BASE_URL;
+        }
+
+        return match ($baseUrl) {
+            'https://sandbox.payglocal.in' => self::UAT_BASE_URL,
+            'https://api.payglocal.in' => self::PROD_BASE_URL,
+            default => $baseUrl,
+        };
     }
 
     /**
