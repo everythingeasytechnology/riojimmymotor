@@ -168,9 +168,13 @@ class PayGlocalService
 
         $key = $this->parsePrivateKey($keyContent);
         if (!$key) {
-            $hint = $this->looksLikeKeyBodyWithoutPemEnvelope($keyContent)
-                ? ' The configured private key appears to be missing PEM BEGIN/END lines.'
-                : '';
+            $hint = '';
+
+            if ($this->looksLikeKeyIdentifier($keyContent)) {
+                $hint = ' The configured private key file appears to contain only a key ID or token, not the actual RSA private key contents.';
+            } elseif ($this->looksLikeKeyBodyWithoutPemEnvelope($keyContent)) {
+                $hint = ' The configured private key appears to be missing PEM BEGIN/END lines.';
+            }
 
             throw new Exception(
                 'Failed to parse your private key. Ensure it is a valid PEM format RSA key.' .
@@ -457,6 +461,26 @@ class PayGlocalService
     private function looksLikeKeyBodyWithoutPemEnvelope(string $content): bool
     {
         return $this->extractBase64KeyBody($content) !== null || $this->extractBinaryDerBody($content) !== null;
+    }
+
+    /**
+     * Detect short identifier-like values that are not actual key material.
+     */
+    private function looksLikeKeyIdentifier(string $content): bool
+    {
+        $content = trim($content);
+
+        if (
+            $content === '' ||
+            $this->looksLikePem($content) ||
+            str_contains($content, "\n") ||
+            strlen($content) < 8 ||
+            strlen($content) > 128
+        ) {
+            return false;
+        }
+
+        return preg_match('/^[A-Za-z0-9._-]+$/', $content) === 1;
     }
 
     /**
