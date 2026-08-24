@@ -5,6 +5,7 @@ return [
         'enabled' => env('PAYGLOCAL_ENABLED', false),
         'mode' => env('PAYGLOCAL_MODE', 'sandbox'),
         'merchant_id' => env('PAYGLOCAL_MERCHANT_ID', ''),
+        'api_key' => env('PAYGLOCAL_API_KEY', ''),
         'public_key_id' => env('PAYGLOCAL_PUBLIC_KEY_ID', ''),
         'private_key_id' => env('PAYGLOCAL_PRIVATE_KEY_ID', ''),
         'public_key_path' => env('PAYGLOCAL_PUBLIC_KEY_PATH', 'payments/payglocal/public.pem'),

@@ -108,6 +108,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label small fw-bold">API KEY (for PayCollect / x-gl-auth)</label>
+                            <input type="text" class="form-control form-control-sm" name="payglocal_api_key" value="{{ $gateways['payglocal']['api_key'] }}" placeholder="Paste PayGlocal API key">
+                            <small class="form-text text-muted">For PayCollect hosted checkout, use the API Key from GCC Key Management. This is sent in the <code>x-gl-auth</code> header.</small>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label small fw-bold">PUBLIC KEY ID (from PayGlocal certificate filename)</label>
                             <input type="text" class="form-control form-control-sm" name="payglocal_public_key_id" value="{{ $gateways['payglocal']['public_key_id'] }}" placeholder="e.g., 834hinrh-8r0n-4657-34nn-fnjhjre33uur">
                             <small class="form-text text-muted">Extract from public key .pem filename (text before first underscore)</small>

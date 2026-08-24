@@ -11,6 +11,7 @@ class PayGlocalService
 {
     private const CHECKOUT_PATH = '/gl/v1/payments/initiate/paycollect';
     private $merchantId;
+    private $apiKey;
     private $publicKeyId;      // PayGlocal's public key ID
     private $privateKeyId;     // Your private key ID
     private $publicKeyPath;    // Path to PayGlocal's public key
@@ -24,6 +25,7 @@ class PayGlocalService
     {
         // Read credentials from database (via Setting model) to match admin panel configuration
         $this->merchantId = Setting::getValue('payment_payglocal_merchant_id', '');
+        $this->apiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
         $this->publicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
         $this->privateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
         $this->publicKeyPath = Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem');
@@ -597,14 +599,9 @@ class PayGlocalService
             ],
         ];
 
-        // Generate auth token
-        $auth = $this->createAuthToken($payload);
-
         // Make API request
-        $response = Http::withHeaders([
-            'x-gl-token-external' => $auth['token'],
-            'Content-Type' => 'application/json',
-        ])->withoutRedirecting()->post(rtrim($this->baseUrl, '/') . self::CHECKOUT_PATH, $payload);
+        $request = Http::withHeaders($this->buildCheckoutHeaders($payload))->withoutRedirecting();
+        $response = $request->post(rtrim($this->baseUrl, '/') . self::CHECKOUT_PATH, $payload);
 
         if ($this->isRedirectResponse($response)) {
             $redirectUrl = $response->header('Location');
@@ -656,6 +653,28 @@ class PayGlocalService
         }
 
         throw new Exception('PayGlocal API error.' . $details);
+    }
+
+    /**
+     * Build the appropriate auth headers for the hosted PayCollect checkout call.
+     */
+    private function buildCheckoutHeaders(array $payload): array
+    {
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
+        if (is_string($this->apiKey) && trim($this->apiKey) !== '') {
+            $headers['x-gl-auth'] = trim($this->apiKey);
+
+            return $headers;
+        }
+
+        // Fallback for accounts configured for JWT-based auth.
+        $auth = $this->createAuthToken($payload);
+        $headers['x-gl-token-external'] = $auth['token'];
+
+        return $headers;
     }
 
     /**
