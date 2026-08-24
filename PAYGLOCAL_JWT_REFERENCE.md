@@ -116,17 +116,18 @@ $response = Http::withHeaders([
 
 ## Setup Steps Summary
 
-1. **Download from PayGlocal Dashboard**
+1. **Get Keys from PayGlocal Dashboard**
 
     ```
     GCC → Configure → Key Management System
-    ├── Download: PayGlocal Common Certificate (.pem)
-    └── Generate RSA Key → Download your private key (.pem)
+    ├── Download or Copy: PayGlocal Common Certificate (.pem)
+    └── Generate RSA Key → Download (.pem file) OR Copy (paste into .pem file)
     ```
 
-2. **Extract Key IDs from Filenames**
+2. **Identify Key IDs**
 
     ```
+    From Filenames:
     Public:  834hinrh-8r0n-4657-34nn-fnjhjre33uur_glocal.pem
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
              This is the Public Key ID
@@ -134,6 +135,10 @@ $response = Http::withHeaders([
     Private: 884hiurh-8e0b-4907-38nn-fuerikejr89_paygmerchant.pem
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
              This is the Private Key ID
+
+    OR from Key Management Table:
+    - Public Key ID is in the filename when you download PayGlocal's cert
+    - Private Key ID is shown in the Key Management table for your RSA key
     ```
 
 3. **Upload Keys to Application**

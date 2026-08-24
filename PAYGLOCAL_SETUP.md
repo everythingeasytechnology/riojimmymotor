@@ -58,17 +58,20 @@ You need **5 credentials** from PayGlocal dashboard:
     - Example: `834hinrh-8r0n-4657-34nn-fnjhjre33uur_glocal.pem`
     - Public Key ID: `834hinrh-8r0n-4657-34nn-fnjhjre33uur`
 
-### 3. Generate and Download Your Private Key
+### 3. Generate and Get Your Private Key
 
 1. From **Key Management System**, click the **Key Type** dropdown filter
 2. Select **RSA** and click **Apply**
 3. Click **Generate RSA Key** button (top-right)
-4. Once generated, click the **Download** icon for your new RSA key
-5. **⚠️ This is your only chance to download!** Save it securely
-6. Extract the **Private Key ID** from the filename:
-    - Filename format: `[PRIVATE_KEY_ID]_[MERCHANT_ID].pem`
-    - Example: `884hiurh-8e0b-4907-38nn-fuerikejr89_paygmerchant.pem`
-    - Private Key ID: `884hiurh-8e0b-4907-38nn-fuerikejr89`
+4. Once generated, you'll see your RSA key in the table. You have two options:
+    - **Option A (Download)**: Click the **Download** icon to download the `.pem` file
+    - **Option B (Copy)**: Click the **Copy** button to copy the key content, then manually save it to a `.pem` file
+5. **⚠️ This is your only chance to get this key!** Save it securely
+6. Extract or identify the **Private Key ID**:
+    - If you downloaded it, the filename format: `[PRIVATE_KEY_ID]_[MERCHANT_ID].pem`
+        - Example: `884hiurh-8e0b-4907-38nn-fuerikejr89_paygmerchant.pem`
+        - Private Key ID: `884hiurh-8e0b-4907-38nn-fuerikejr89`
+    - If you copied it, look for the **Key ID** in the Key Management table (same as Private Key ID)
 
 ### 4. Upload Keys to Your Application
 
@@ -124,7 +127,7 @@ PAYGLOCAL_BASE_URL=https://sandbox.payglocal.in
 ⚠️ **Critical Security Reminders:**
 
 1. **Private Key is Sensitive**
-    - Downloaded once only from PayGlocal dashboard
+    - Available once only from PayGlocal dashboard (either download or copy)
     - Never commit to version control
     - Never share via email or chat
     - Store securely in environment-specific configuration

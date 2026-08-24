@@ -128,27 +128,27 @@ Added:
 
 You now need to configure **5 credentials** from PayGlocal:
 
-| Credential             | From Dashboard                                | Purpose                                       |
-| ---------------------- | --------------------------------------------- | --------------------------------------------- |
-| **Merchant ID**        | My Account → TID Details                      | Identifies your merchant account              |
-| **Public Key ID**      | Download public key filename                  | Tells PayGlocal which key was used to encrypt |
-| **Private Key ID**     | Key Management table                          | Tells PayGlocal which key pair to verify      |
-| **Public Key (file)**  | Key Management → PayGlocal Common Certificate | Encrypts your payloads                        |
-| **Private Key (file)** | Key Management → Generate RSA Key → Download  | Signs your requests                           |
+| Credential             | From Dashboard                                           | Purpose                                       |
+| ---------------------- | -------------------------------------------------------- | --------------------------------------------- |
+| **Merchant ID**        | My Account → TID Details                                 | Identifies your merchant account              |
+| **Public Key ID**      | Public key filename or Key Management table              | Tells PayGlocal which key was used to encrypt |
+| **Private Key ID**     | Key Management table or private key filename             | Tells PayGlocal which key pair to verify      |
+| **Public Key (file)**  | Key Management → PayGlocal Common Certificate (Download) | Encrypts your payloads                        |
+| **Private Key (file)** | Key Management → Generate RSA Key → Download or Copy     | Signs your requests                           |
 
 ## 🚀 How to Implement
 
 ### Quick Start:
 
 1. Read [PAYGLOCAL_SETUP.md](PAYGLOCAL_SETUP.md) for complete step-by-step instructions
-2. Get credentials from PayGlocal GCC dashboard
+2. Get credentials from PayGlocal GCC dashboard (download or copy keys as needed)
 3. Upload key files to `storage/payments/payglocal/` directory
 4. Configure in Admin Panel → Payment Gateways → PayGlocal
 5. Test in sandbox mode before going live
 
 ### Key Security Notes:
 
-- ⚠️ Private key is sensitive - downloaded once only
+- ⚠️ Private key is sensitive - available once only (download or copy option)
 - ⚠️ Never commit keys to version control (.gitignore is configured)
 - ⚠️ Use separate credentials for Sandbox and Production
 - ⚠️ Store keys securely in production (consider using Laravel's vault or secrets manager)

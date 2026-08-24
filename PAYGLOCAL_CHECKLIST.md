@@ -30,13 +30,15 @@ mkdir -p storage/payments/payglocal
 chmod 775 storage/payments/payglocal
 ```
 
-### 2. Download Keys from PayGlocal
+### 2. Get Keys from PayGlocal
 
 1. Log in to PayGlocal GCC Dashboard
 2. Get Merchant ID from: My Account → TID Details
-3. Download PayGlocal's public key: Configure → Key Management System
-4. Generate and download your private key: Configure → Key Management System → Generate RSA Key
-5. Extract Key IDs from filenames
+3. Download PayGlocal's public key: Configure → Key Management System → PayGlocal Common Certificate
+4. Generate and get your private key: Configure → Key Management System → Generate RSA Key
+    - **Download Option**: Click the Download icon to get the .pem file
+    - **Copy Option**: Click the Copy button and manually create the .pem file with the content
+5. Extract Key IDs from filenames or from the Key Management table
 
 ### 3. Upload Keys to Application
 
