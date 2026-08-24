@@ -80,7 +80,7 @@ PAYGLOCAL_PUBLIC_KEY_ID=             # Extract from public key filename
 PAYGLOCAL_PRIVATE_KEY_ID=            # Extract from private key filename
 PAYGLOCAL_PUBLIC_KEY_PATH=payments/payglocal/public.pem
 PAYGLOCAL_PRIVATE_KEY_PATH=payments/payglocal/private.pem
-PAYGLOCAL_BASE_URL=https://sandbox.payglocal.in
+PAYGLOCAL_BASE_URL=https://api.uat.payglocal.in
 ```
 
 ## Configuration Credentials Structure
