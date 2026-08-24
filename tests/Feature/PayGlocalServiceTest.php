@@ -49,6 +49,17 @@ class PayGlocalServiceTest extends TestCase
         $this->assertSame($privateKeyPem, $keyContent);
     }
 
+    public function test_private_key_candidates_wrap_headerless_base64_key_bodies(): void
+    {
+        $service = $this->makeService();
+        $candidates = $this->invokePrivateKeyCandidates($service, str_repeat('QUJD', 40));
+
+        $this->assertContains(
+            "-----BEGIN PRIVATE KEY-----\n" . chunk_split(str_repeat('QUJD', 40), 64, "\n") . "-----END PRIVATE KEY-----\n",
+            $candidates
+        );
+    }
+
     private function makeService(): PayGlocalService
     {
         $this->configurePayGlocal('public.pem', 'private.pem');
@@ -72,6 +83,17 @@ class PayGlocalServiceTest extends TestCase
     private function invokeGetKeyContent(PayGlocalService $service, string $source): ?string
     {
         $method = new ReflectionMethod($service, 'getKeyContent');
+        $method->setAccessible(true);
+
+        return $method->invoke($service, $source);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function invokePrivateKeyCandidates(PayGlocalService $service, string $source): array
+    {
+        $method = new ReflectionMethod($service, 'privateKeyCandidates');
         $method->setAccessible(true);
 
         return $method->invoke($service, $source);

@@ -142,11 +142,10 @@ class PayGlocalService
     {
         $keyContent = $this->getKeyContent($this->publicKeyPath);
         if (!$keyContent) {
-            throw new Exception('PayGlocal public key could not be loaded from: ' . $this->publicKeyPath);
+            throw new Exception('PayGlocal public key could not be loaded from: ' . $this->describeKeySource($this->publicKeyPath));
         }
 
-        $this->clearOpenSslErrors();
-        $key = openssl_pkey_get_public($keyContent);
+        $key = $this->parsePublicKey($keyContent);
         if (!$key) {
             throw new Exception(
                 'Failed to parse PayGlocal public key. Ensure it is a valid PEM certificate or public key.' .
@@ -164,14 +163,18 @@ class PayGlocalService
     {
         $keyContent = $this->getKeyContent($this->privateKeyPath);
         if (!$keyContent) {
-            throw new Exception('Your private key could not be loaded from: ' . $this->privateKeyPath);
+            throw new Exception('Your private key could not be loaded from: ' . $this->describeKeySource($this->privateKeyPath));
         }
 
-        $this->clearOpenSslErrors();
-        $key = openssl_pkey_get_private($keyContent);
+        $key = $this->parsePrivateKey($keyContent);
         if (!$key) {
+            $hint = $this->looksLikeKeyBodyWithoutPemEnvelope($keyContent)
+                ? ' The configured private key appears to be missing PEM BEGIN/END lines.'
+                : '';
+
             throw new Exception(
                 'Failed to parse your private key. Ensure it is a valid PEM format RSA key.' .
+                $hint .
                 $this->formatOpenSslErrors()
             );
         }
@@ -265,16 +268,16 @@ class PayGlocalService
             return null;
         }
 
-        if ($this->looksLikePem($content)) {
-            return $this->normalizePemLineEndings($content);
+        if (($normalizedPem = $this->extractAndFormatPem($content)) !== null) {
+            return $normalizedPem;
         }
 
         $decoded = base64_decode($content, true);
         if ($decoded !== false) {
             $decoded = trim($decoded);
 
-            if ($this->looksLikePem($decoded)) {
-                return $this->normalizePemLineEndings($decoded);
+            if (($normalizedPem = $this->extractAndFormatPem($decoded)) !== null) {
+                return $normalizedPem;
             }
         }
 
@@ -300,6 +303,193 @@ class PayGlocalService
         $content = str_replace(["\r\n", "\r"], "\n", $content);
 
         return rtrim($content) . "\n";
+    }
+
+    /**
+     * Normalize an existing PEM block into a well-formed multi-line string.
+     */
+    private function extractAndFormatPem(string $content): ?string
+    {
+        $content = $this->normalizePemLineEndings($content);
+
+        if (!preg_match('/-----BEGIN ([A-Z0-9 ]+)-----(.*?)-----END \1-----/s', $content, $matches)) {
+            return null;
+        }
+
+        $body = preg_replace('/\s+/', '', $matches[2]);
+        if (!is_string($body) || $body === '') {
+            return null;
+        }
+
+        return $this->buildPemFromBase64Body($matches[1], $body);
+    }
+
+    /**
+     * Attempt to parse the configured public key using PEM and headerless fallbacks.
+     */
+    private function parsePublicKey(string $keyContent)
+    {
+        foreach ($this->publicKeyCandidates($keyContent) as $candidate) {
+            $this->clearOpenSslErrors();
+            $key = openssl_pkey_get_public($candidate);
+
+            if ($key !== false) {
+                return $key;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Attempt to parse the configured private key using PEM and headerless fallbacks.
+     */
+    private function parsePrivateKey(string $keyContent)
+    {
+        foreach ($this->privateKeyCandidates($keyContent) as $candidate) {
+            $this->clearOpenSslErrors();
+            $key = openssl_pkey_get_private($candidate);
+
+            if ($key !== false) {
+                return $key;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build possible public-key representations from inline/file content.
+     *
+     * @return array<int, string>
+     */
+    private function publicKeyCandidates(string $content): array
+    {
+        return $this->keyCandidatesForLabels($content, ['PUBLIC KEY', 'CERTIFICATE']);
+    }
+
+    /**
+     * Build possible private-key representations from inline/file content.
+     *
+     * @return array<int, string>
+     */
+    private function privateKeyCandidates(string $content): array
+    {
+        return $this->keyCandidatesForLabels($content, ['PRIVATE KEY', 'RSA PRIVATE KEY']);
+    }
+
+    /**
+     * Build candidate PEM strings from several common key storage formats.
+     *
+     * @param  array<int, string>  $labels
+     * @return array<int, string>
+     */
+    private function keyCandidatesForLabels(string $content, array $labels): array
+    {
+        $candidates = [$content];
+        $normalizedPem = $this->normalizePemContent($content);
+        if ($normalizedPem !== null) {
+            $candidates[] = $normalizedPem;
+        }
+
+        $base64Body = $this->extractBase64KeyBody($content);
+        if ($base64Body !== null) {
+            foreach ($labels as $label) {
+                $candidates[] = $this->buildPemFromBase64Body($label, $base64Body);
+            }
+        }
+
+        $derBody = $this->extractBinaryDerBody($content);
+        if ($derBody !== null) {
+            foreach ($labels as $label) {
+                $candidates[] = $this->buildPemFromBase64Body($label, $derBody);
+            }
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    /**
+     * Detect headerless base64 key material copied without PEM markers.
+     */
+    private function extractBase64KeyBody(string $content): ?string
+    {
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', trim($content));
+        if (!is_string($content) || $content === '') {
+            return null;
+        }
+
+        if ($this->looksLikePem($content)) {
+            return null;
+        }
+
+        $body = preg_replace('/\s+/', '', $content);
+        if (!is_string($body) || $body === '') {
+            return null;
+        }
+
+        if (strlen($body) < 128 || !preg_match('/^[A-Za-z0-9+\/=]+$/', $body)) {
+            return null;
+        }
+
+        return $body;
+    }
+
+    /**
+     * Detect raw DER key bytes that were stored without PEM/base64 wrapping.
+     */
+    private function extractBinaryDerBody(string $content): ?string
+    {
+        if ($this->looksLikePem($content)) {
+            return null;
+        }
+
+        if (!preg_match('/[^\x09\x0A\x0D\x20-\x7E]/', $content)) {
+            return null;
+        }
+
+        return base64_encode($content);
+    }
+
+    /**
+     * Determine whether content resembles a base64 key body without PEM headers.
+     */
+    private function looksLikeKeyBodyWithoutPemEnvelope(string $content): bool
+    {
+        return $this->extractBase64KeyBody($content) !== null || $this->extractBinaryDerBody($content) !== null;
+    }
+
+    /**
+     * Build a PEM block from base64 body content.
+     */
+    private function buildPemFromBase64Body(string $label, string $body): string
+    {
+        return sprintf(
+            "-----BEGIN %s-----\n%s-----END %s-----\n",
+            $label,
+            chunk_split($body, 64, "\n"),
+            $label
+        );
+    }
+
+    /**
+     * Avoid echoing inline secret material back in exception messages.
+     */
+    private function describeKeySource(string $source): string
+    {
+        $source = trim($source);
+
+        if (
+            $source === '' ||
+            str_contains($source, "\n") ||
+            str_contains($source, '-----BEGIN ') ||
+            strlen($source) > 120 ||
+            $this->looksLikeKeyBodyWithoutPemEnvelope($source)
+        ) {
+            return '[configured inline key value]';
+        }
+
+        return $source;
     }
 
     /**
