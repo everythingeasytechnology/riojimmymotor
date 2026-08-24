@@ -134,10 +134,19 @@ class CheckoutController extends Controller
             } elseif ($paymentMethod === 'payglocal') {
                 $payglocalEnabled = Setting::getValue('payment_payglocal_enabled', '0');
                 $payglocalMerchantId = Setting::getValue('payment_payglocal_merchant_id', '');
+                $payglocalApiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
                 $payglocalPublicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
                 $payglocalPrivateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
-                if ($payglocalEnabled !== '1' || empty($payglocalMerchantId) || empty($payglocalPublicKeyId) || empty($payglocalPrivateKeyId)) {
+                if ($payglocalEnabled !== '1' || empty($payglocalMerchantId)) {
                     return redirect()->back()->withInput()->with('error', 'PayGlocal payment gateway is not properly configured.');
+                }
+
+                if (empty($payglocalApiKey)) {
+                    return redirect()->back()->withInput()->with('error', 'PayGlocal PayCollect API key is missing. Please add the API Key in Admin → Payment Gateways → PayGlocal.');
+                }
+
+                if (empty($payglocalPublicKeyId) || empty($payglocalPrivateKeyId)) {
+                    return redirect()->back()->withInput()->with('error', 'PayGlocal key IDs are missing. Please complete the PayGlocal configuration in Admin → Payment Gateways.');
                 }
             }
         }

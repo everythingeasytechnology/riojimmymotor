@@ -18,6 +18,7 @@ class PayGlocalService
     private $privateKeyPath;   // Path to your private key
     private $baseUrl;
     private $mode;
+    private $checkoutAuthMode = 'x-gl-token-external';
     private const UAT_BASE_URL = 'https://api.uat.payglocal.in';
     private const PROD_BASE_URL = 'https://api.prod.payglocal.in';
 
@@ -651,6 +652,7 @@ class PayGlocalService
         } elseif (trim($response->body()) !== '') {
             $details .= ' Body: ' . $response->body();
         }
+        $details .= " Auth: {$this->checkoutAuthMode}";
 
         throw new Exception('PayGlocal API error.' . $details);
     }
@@ -665,12 +667,14 @@ class PayGlocalService
         ];
 
         if (is_string($this->apiKey) && trim($this->apiKey) !== '') {
+            $this->checkoutAuthMode = 'x-gl-auth';
             $headers['x-gl-auth'] = trim($this->apiKey);
 
             return $headers;
         }
 
         // Fallback for accounts configured for JWT-based auth.
+        $this->checkoutAuthMode = 'x-gl-token-external';
         $auth = $this->createAuthToken($payload);
         $headers['x-gl-token-external'] = $auth['token'];
 
