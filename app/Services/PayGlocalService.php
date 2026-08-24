@@ -9,6 +9,7 @@ use Exception;
 
 class PayGlocalService
 {
+    private const CHECKOUT_PATH = '/gl/v1/payments/initiate/paycollect';
     private $merchantId;
     private $publicKeyId;      // PayGlocal's public key ID
     private $privateKeyId;     // Your private key ID
@@ -576,15 +577,24 @@ class PayGlocalService
     public function createCheckout(array $data): array
     {
         $payload = [
-            'order_id' => $data['order_id'],
-            'amount' => (float) $data['amount'],
-            'currency' => $data['currency'] ?? 'USD',
-            'customer_name' => $data['customer_name'],
-            'customer_email' => $data['customer_email'],
-            'customer_phone' => $data['customer_phone'],
-            'return_url' => $data['return_url'],
-            'cancel_url' => $data['cancel_url'],
-            'metadata' => $data['metadata'] ?? [],
+            'merchantTxnId' => $data['order_id'],
+            'merchantCallbackURL' => $data['return_url'],
+            'paymentData' => [
+                // Keep multiple common aliases because PayGlocal's public docs expose
+                // only the envelope keys, while plugin docs point to the same gateway URL.
+                'amount' => (float) $data['amount'],
+                'totalAmount' => (float) $data['amount'],
+                'txnAmount' => (float) $data['amount'],
+                'currency' => $data['currency'] ?? 'USD',
+                'currencyCode' => $data['currency'] ?? 'USD',
+                'txnCurrency' => $data['currency'] ?? 'USD',
+                'customerName' => $data['customer_name'],
+                'customerEmail' => $data['customer_email'],
+                'customerPhone' => $data['customer_phone'],
+                'merchantReturnURL' => $data['return_url'],
+                'merchantCancelURL' => $data['cancel_url'],
+                'metaData' => $data['metadata'] ?? [],
+            ],
         ];
 
         // Generate auth token
@@ -594,7 +604,7 @@ class PayGlocalService
         $response = Http::withHeaders([
             'x-gl-token-external' => $auth['token'],
             'Content-Type' => 'application/json',
-        ])->withoutRedirecting()->post(rtrim($this->baseUrl, '/') . '/api/v1/checkout', $payload);
+        ])->withoutRedirecting()->post(rtrim($this->baseUrl, '/') . self::CHECKOUT_PATH, $payload);
 
         if ($this->isRedirectResponse($response)) {
             $redirectUrl = $response->header('Location');
