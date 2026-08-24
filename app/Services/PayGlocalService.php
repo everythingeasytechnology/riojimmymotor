@@ -145,9 +145,13 @@ class PayGlocalService
             throw new Exception('PayGlocal public key could not be loaded from: ' . $this->publicKeyPath);
         }
 
+        $this->clearOpenSslErrors();
         $key = openssl_pkey_get_public($keyContent);
         if (!$key) {
-            throw new Exception('Failed to parse PayGlocal public key. Ensure it is a valid PEM certificate.');
+            throw new Exception(
+                'Failed to parse PayGlocal public key. Ensure it is a valid PEM certificate or public key.' .
+                $this->formatOpenSslErrors()
+            );
         }
 
         return $key;
@@ -163,9 +167,13 @@ class PayGlocalService
             throw new Exception('Your private key could not be loaded from: ' . $this->privateKeyPath);
         }
 
+        $this->clearOpenSslErrors();
         $key = openssl_pkey_get_private($keyContent);
         if (!$key) {
-            throw new Exception('Failed to parse your private key. Ensure it is a valid PEM format RSA key.');
+            throw new Exception(
+                'Failed to parse your private key. Ensure it is a valid PEM format RSA key.' .
+                $this->formatOpenSslErrors()
+            );
         }
 
         return $key;
@@ -176,23 +184,146 @@ class PayGlocalService
      */
     private function getKeyContent(string $path): ?string
     {
+        $path = trim($path);
+        if ($path === '') {
+            return null;
+        }
+
+        $inlinePem = $this->normalizePemContent($path);
+        if ($inlinePem !== null) {
+            return $inlinePem;
+        }
+
         // Check if it's an absolute path
-        if (file_exists($path)) {
-            return file_get_contents($path);
+        foreach ($this->possibleKeyPaths($path) as $candidate) {
+            if (is_file($candidate) && is_readable($candidate)) {
+                $content = file_get_contents($candidate);
+
+                return $content === false ? null : ($this->normalizePemContent($content) ?? $content);
+            }
         }
 
-        // Check in storage
-        $storagePath = 'app/' . ltrim($path, '/');
-        if (Storage::exists($storagePath)) {
-            return Storage::get($storagePath);
-        }
+        $diskPath = $this->localDiskPath($path);
+        if ($diskPath !== null && Storage::disk('local')->exists($diskPath)) {
+            $content = Storage::disk('local')->get($diskPath);
 
-        // Check in storage root
-        if (file_exists(storage_path($path))) {
-            return file_get_contents(storage_path($path));
+            return $this->normalizePemContent($content) ?? $content;
         }
 
         return null;
+    }
+
+    /**
+     * Generate the possible filesystem paths for a configured key source.
+     *
+     * @return array<int, string>
+     */
+    private function possibleKeyPaths(string $path): array
+    {
+        $paths = [$path];
+
+        if (str_starts_with($path, 'file://')) {
+            $paths[] = substr($path, 7);
+        }
+
+        $trimmedPath = ltrim($path, '/');
+
+        $paths[] = base_path($trimmedPath);
+        $paths[] = storage_path($trimmedPath);
+        $paths[] = storage_path('app/' . $trimmedPath);
+
+        return array_values(array_unique(array_filter($paths)));
+    }
+
+    /**
+     * Map a configured path to the default local storage disk when possible.
+     */
+    private function localDiskPath(string $path): ?string
+    {
+        $path = ltrim($path, '/');
+        if ($path === '') {
+            return null;
+        }
+
+        foreach (['storage/app/', 'storage/', 'app/'] as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                $path = substr($path, strlen($prefix));
+                break;
+            }
+        }
+
+        return $path === '' ? null : $path;
+    }
+
+    /**
+     * Normalize PEM content from either file contents or copied key material.
+     */
+    private function normalizePemContent(string $content): ?string
+    {
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', trim($content));
+        if (!is_string($content) || $content === '') {
+            return null;
+        }
+
+        if ($this->looksLikePem($content)) {
+            return $this->normalizePemLineEndings($content);
+        }
+
+        $decoded = base64_decode($content, true);
+        if ($decoded !== false) {
+            $decoded = trim($decoded);
+
+            if ($this->looksLikePem($decoded)) {
+                return $this->normalizePemLineEndings($decoded);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Detect PEM blocks, including keys stored on a single line with escaped newlines.
+     */
+    private function looksLikePem(string $content): bool
+    {
+        $normalized = str_replace(["\\r\\n", "\\n", "\\r"], "\n", $content);
+
+        return str_contains($normalized, '-----BEGIN ') && str_contains($normalized, '-----END ');
+    }
+
+    /**
+     * Convert mixed or escaped line endings into a PEM string OpenSSL can parse.
+     */
+    private function normalizePemLineEndings(string $content): string
+    {
+        $content = str_replace(["\\r\\n", "\\n", "\\r"], "\n", $content);
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+
+        return rtrim($content) . "\n";
+    }
+
+    /**
+     * Clear any buffered OpenSSL errors before a parse attempt.
+     */
+    private function clearOpenSslErrors(): void
+    {
+        while (openssl_error_string() !== false) {
+            // Drain the OpenSSL error buffer.
+        }
+    }
+
+    /**
+     * Format buffered OpenSSL errors for troubleshooting.
+     */
+    private function formatOpenSslErrors(): string
+    {
+        $errors = [];
+
+        while (($error = openssl_error_string()) !== false) {
+            $errors[] = $error;
+        }
+
+        return empty($errors) ? '' : ' OpenSSL: ' . implode(' | ', $errors);
     }
 
     /**
