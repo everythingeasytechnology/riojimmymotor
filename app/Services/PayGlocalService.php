@@ -594,14 +594,97 @@ class PayGlocalService
         $response = Http::withHeaders([
             'x-gl-token-external' => $auth['token'],
             'Content-Type' => 'application/json',
-        ])->post(rtrim($this->baseUrl, '/') . '/api/v1/checkout', $payload);
+        ])->withoutRedirecting()->post(rtrim($this->baseUrl, '/') . '/api/v1/checkout', $payload);
 
-        if (!$response->successful()) {
-            throw new Exception('PayGlocal API error: ' . $response->body());
+        if ($this->isRedirectResponse($response)) {
+            $redirectUrl = $response->header('Location');
+
+            if (is_string($redirectUrl) && trim($redirectUrl) !== '') {
+                return [
+                    'redirect_url' => $redirectUrl,
+                    'message' => $this->extractResponseMessage($response),
+                    'status_code' => $response->status(),
+                ];
+            }
         }
 
-        $data = $response->json();
-        return $data;
+        if ($response->successful()) {
+            $data = $response->json();
+
+            if (is_array($data)) {
+                return $data;
+            }
+
+            $redirectUrl = $this->findFirstUrlInBody($response->body());
+            if ($redirectUrl !== null) {
+                return [
+                    'redirect_url' => $redirectUrl,
+                    'message' => $this->extractResponseMessage($response),
+                    'status_code' => $response->status(),
+                ];
+            }
+
+            return [
+                'raw_body' => $response->body(),
+                'message' => $this->extractResponseMessage($response),
+                'status_code' => $response->status(),
+            ];
+        }
+
+        $message = $this->extractResponseMessage($response);
+        $location = $response->header('Location');
+        $status = $response->status();
+
+        $details = " HTTP {$status}";
+        if (is_string($location) && trim($location) !== '') {
+            $details .= " Location: {$location}";
+        }
+        if ($message !== null) {
+            $details .= " Message: {$message}";
+        } elseif (trim($response->body()) !== '') {
+            $details .= ' Body: ' . $response->body();
+        }
+
+        throw new Exception('PayGlocal API error.' . $details);
+    }
+
+    /**
+     * Check whether the gateway returned a redirect-style response.
+     */
+    private function isRedirectResponse($response): bool
+    {
+        return $response->status() >= 300 && $response->status() < 400;
+    }
+
+    /**
+     * Extract a human-readable message from a PayGlocal HTTP response.
+     */
+    private function extractResponseMessage($response): ?string
+    {
+        $json = $response->json();
+        if (is_array($json)) {
+            foreach (['message', 'status', 'reasonCode'] as $key) {
+                $value = $json[$key] ?? null;
+                if (is_string($value) && trim($value) !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        $body = trim($response->body());
+        return $body === '' ? null : $body;
+    }
+
+    /**
+     * Extract the first absolute URL found in a plain-text or HTML response body.
+     */
+    private function findFirstUrlInBody(string $body): ?string
+    {
+        if (preg_match('/https?:\/\/[^\s"\']+/i', $body, $matches) === 1) {
+            return $matches[0];
+        }
+
+        return null;
     }
 
     /**
