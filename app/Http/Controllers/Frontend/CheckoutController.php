@@ -429,17 +429,158 @@ class CheckoutController extends Controller
             ];
 
             $response = $payGlocalService->createCheckout($checkoutData);
-            
-            $checkoutUrl = $response['checkout_url'] ?? $response['payment_url'] ?? $response['redirect_url'] ?? $response['url'] ?? null;
+
+            $checkoutUrl = $this->extractPayGlocalCheckoutUrl($response);
 
             if (!$checkoutUrl) {
-                throw new \Exception('PayGlocal checkout URL was not returned by the gateway.');
+                $tokenDetected = $this->payGlocalResponseIncludesHostedToken($response);
+                $responseSummary = $this->summarizePayGlocalResponse($response);
+
+                if ($tokenDetected) {
+                    throw new \Exception(
+                        'PayGlocal did not return a direct checkout URL. The gateway response appears to include a token-based hosted flow instead.' .
+                        $responseSummary
+                    );
+                }
+
+                throw new \Exception('PayGlocal checkout URL was not returned by the gateway.' . $responseSummary);
             }
 
             return $checkoutUrl;
         } catch (\Exception $e) {
             throw new \Exception('PayGlocal checkout error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Extract a hosted checkout URL from common PayGlocal response shapes.
+     */
+    private function extractPayGlocalCheckoutUrl(array $response): ?string
+    {
+        $candidateKeys = [
+            'checkout_url',
+            'checkoutUrl',
+            'payment_url',
+            'paymentUrl',
+            'redirect_url',
+            'redirectUrl',
+            'redirectURL',
+            'url',
+            'href',
+            'payment_link',
+            'paymentLink',
+            'checkout_link',
+            'checkoutLink',
+            'redirect_link',
+            'redirectLink',
+            'hosted_url',
+            'hostedUrl',
+        ];
+
+        foreach ($candidateKeys as $key) {
+            $value = $this->findFirstStringByKey($response, $key);
+            if ($this->looksLikeHttpUrl($value)) {
+                return $value;
+            }
+        }
+
+        return $this->findFirstHttpUrl($response);
+    }
+
+    /**
+     * Detect token-based PayGlocal hosted-flow responses without exposing token values.
+     */
+    private function payGlocalResponseIncludesHostedToken(array $response): bool
+    {
+        foreach (['token', 'paymentToken', 'sessionToken', 'checkoutToken', 'hostedToken'] as $key) {
+            $value = $this->findFirstStringByKey($response, $key);
+            if (is_string($value) && trim($value) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Build a concise response summary for troubleshooting.
+     */
+    private function summarizePayGlocalResponse(array $response): string
+    {
+        $parts = [];
+
+        foreach (['status', 'message', 'reasonCode', 'gid'] as $key) {
+            $value = $response[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                $parts[] = "{$key}={$value}";
+            }
+        }
+
+        $topKeys = array_keys($response);
+        if (!empty($topKeys)) {
+            $parts[] = 'top_level_keys=' . implode(',', $topKeys);
+        }
+
+        if (isset($response['data']) && is_array($response['data']) && !empty($response['data'])) {
+            $parts[] = 'data_keys=' . implode(',', array_keys($response['data']));
+        }
+
+        return empty($parts) ? '' : ' Response summary: ' . implode(' | ', $parts);
+    }
+
+    /**
+     * Recursively find the first string for a given key in a nested array.
+     */
+    private function findFirstStringByKey(array $payload, string $targetKey): ?string
+    {
+        foreach ($payload as $key => $value) {
+            if ($key === $targetKey && is_string($value)) {
+                return $value;
+            }
+
+            if (is_array($value)) {
+                $nested = $this->findFirstStringByKey($value, $targetKey);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Recursively find the first HTTP(S) URL in a nested response array.
+     */
+    private function findFirstHttpUrl(array $payload): ?string
+    {
+        foreach ($payload as $value) {
+            if (is_string($value) && $this->looksLikeHttpUrl($value)) {
+                return $value;
+            }
+
+            if (is_array($value)) {
+                $nested = $this->findFirstHttpUrl($value);
+                if ($nested !== null) {
+                    return $nested;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check whether a value is an absolute HTTP(S) URL.
+     */
+    private function looksLikeHttpUrl(?string $value): bool
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return false;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_URL) !== false
+            && in_array(parse_url($value, PHP_URL_SCHEME), ['http', 'https'], true);
     }
 
     /**
@@ -484,4 +625,3 @@ class CheckoutController extends Controller
         return hash_equals($expectedSignature, $razorpaySignature);
     }
 }
-
