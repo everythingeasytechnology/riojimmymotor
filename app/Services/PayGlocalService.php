@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Exception;
@@ -18,17 +19,18 @@ class PayGlocalService
 
     public function __construct()
     {
-        $this->merchantId = config('payment.payglocal.merchant_id');
-        $this->publicKeyId = config('payment.payglocal.public_key_id');
-        $this->privateKeyId = config('payment.payglocal.private_key_id');
-        $this->publicKeyPath = config('payment.payglocal.public_key_path');
-        $this->privateKeyPath = config('payment.payglocal.private_key_path');
-        $this->baseUrl = config('payment.payglocal.base_url');
-        $this->mode = config('payment.payglocal.mode', 'sandbox');
+        // Read credentials from database (via Setting model) to match admin panel configuration
+        $this->merchantId = Setting::getValue('payment_payglocal_merchant_id', '');
+        $this->publicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
+        $this->privateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
+        $this->publicKeyPath = Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem');
+        $this->privateKeyPath = Setting::getValue('payment_payglocal_private_key_path', 'payments/payglocal/private.pem');
+        $this->baseUrl = Setting::getValue('payment_payglocal_base_url', 'https://sandbox.payglocal.in');
+        $this->mode = Setting::getValue('payment_payglocal_mode', 'sandbox');
 
         // Validate required credentials
         if (!$this->merchantId || !$this->publicKeyId || !$this->privateKeyId) {
-            throw new Exception('PayGlocal credentials are not properly configured.');
+            throw new Exception('PayGlocal credentials are not properly configured. Please check Admin Panel → Payment Gateways → PayGlocal Configuration.');
         }
     }
 
