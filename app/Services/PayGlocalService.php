@@ -59,6 +59,8 @@ class PayGlocalService
                 'Use the PayGlocal Common Certificate key ID for PUBLIC KEY ID and your merchant RSA key ID for PRIVATE KEY ID.'
             );
         }
+
+        $this->validateEnvironmentConfiguration();
     }
 
     /**
@@ -77,6 +79,24 @@ class PayGlocalService
             'https://api.prod.payglocal.in' => self::PROD_BASE_URL,
             default => $baseUrl,
         };
+    }
+
+    /**
+     * Catch the most common live/UAT misconfigurations before the request reaches PayGlocal.
+     */
+    private function validateEnvironmentConfiguration(): void
+    {
+        if (!str_contains($this->baseUrl, 'payglocal.in')) {
+            throw new Exception('PayGlocal base URL is invalid. Use https://api.uat.payglocal.in or https://api.prod.payglocal.in.');
+        }
+
+        if ($this->mode === 'live' && str_contains($this->baseUrl, '.uat.')) {
+            throw new Exception('PayGlocal is set to live mode, but the base URL is pointing to UAT. Use https://api.prod.payglocal.in for live mode.');
+        }
+
+        if ($this->mode !== 'live' && str_contains($this->baseUrl, '.prod.')) {
+            throw new Exception('PayGlocal is set to sandbox mode, but the base URL is pointing to production. Use https://api.uat.payglocal.in for sandbox mode.');
+        }
     }
 
     /**
@@ -195,6 +215,13 @@ class PayGlocalService
             throw new Exception('PayGlocal public key could not be loaded from: ' . $this->describeKeySource($this->publicKeyPath));
         }
 
+        if ($this->containsPrivateKeyPem($keyContent)) {
+            throw new Exception(
+                'PayGlocal public key file is misconfigured. PUBLIC KEY FILE PATH currently points to a private key. ' .
+                'Upload the PayGlocal Common Certificate/public key in the public key field.'
+            );
+        }
+
         try {
             return $this->isCertificatePem($keyContent)
                 ? JWKFactory::createFromCertificate($keyContent, [
@@ -223,6 +250,13 @@ class PayGlocalService
         $keyContent = $this->getKeyContent($this->privateKeyPath);
         if (!$keyContent) {
             throw new Exception('Your private key could not be loaded from: ' . $this->describeKeySource($this->privateKeyPath));
+        }
+
+        if ($this->containsCertificatePem($keyContent) || $this->containsPublicKeyPem($keyContent)) {
+            throw new Exception(
+                'PayGlocal private key file is misconfigured. PRIVATE KEY FILE PATH currently points to a public key/certificate. ' .
+                'Upload your merchant RSA private key in the private key field.'
+            );
         }
 
         try {
@@ -270,6 +304,32 @@ class PayGlocalService
      * Detect certificate PEM material so JWKFactory uses the correct parser.
      */
     private function isCertificatePem(string $content): bool
+    {
+        return str_contains($content, '-----BEGIN CERTIFICATE-----');
+    }
+
+    /**
+     * Detect whether PEM content is a private key.
+     */
+    private function containsPrivateKeyPem(string $content): bool
+    {
+        return str_contains($content, '-----BEGIN PRIVATE KEY-----')
+            || str_contains($content, '-----BEGIN RSA PRIVATE KEY-----');
+    }
+
+    /**
+     * Detect whether PEM content is a public key.
+     */
+    private function containsPublicKeyPem(string $content): bool
+    {
+        return str_contains($content, '-----BEGIN PUBLIC KEY-----')
+            || str_contains($content, '-----BEGIN RSA PUBLIC KEY-----');
+    }
+
+    /**
+     * Detect whether PEM content is an X.509 certificate.
+     */
+    private function containsCertificatePem(string $content): bool
     {
         return str_contains($content, '-----BEGIN CERTIFICATE-----');
     }
