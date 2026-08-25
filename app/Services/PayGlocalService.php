@@ -52,6 +52,13 @@ class PayGlocalService
         if (!$this->merchantId || !$this->publicKeyId || !$this->privateKeyId) {
             throw new Exception('PayGlocal credentials are not properly configured. Please check Admin Panel → Payment Gateways → PayGlocal Configuration.');
         }
+
+        if ($this->publicKeyId === $this->privateKeyId) {
+            throw new Exception(
+                'PayGlocal public key ID and private key ID cannot be the same. ' .
+                'Use the PayGlocal Common Certificate key ID for PUBLIC KEY ID and your merchant RSA key ID for PRIVATE KEY ID.'
+            );
+        }
     }
 
     /**
