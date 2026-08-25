@@ -77,6 +77,8 @@ class PayGlocalService
      */
     public function createAuthToken(array $payload): array
     {
+        $this->ensureJoseDependenciesAvailable();
+
         $encryptedPayload = $this->encryptPayload($payload);
         $signatureToken = $this->signPayload($encryptedPayload);
 
@@ -88,6 +90,31 @@ class PayGlocalService
                 'Content-Type' => 'text/plain',
             ],
         ];
+    }
+
+    /**
+     * Fail with a useful message when the PayGlocal JOSE dependencies are missing on the deployed server.
+     */
+    private function ensureJoseDependenciesAvailable(): void
+    {
+        $requiredClasses = [
+            JWEBuilder::class,
+            JWSBuilder::class,
+            JWKFactory::class,
+            AlgorithmManager::class,
+            RSAOAEP256::class,
+            A128CBCHS256::class,
+            RS256::class,
+        ];
+
+        foreach ($requiredClasses as $className) {
+            if (!class_exists($className)) {
+                throw new Exception(
+                    'PayGlocal SDK dependency is missing on this server (' . $className . '). ' .
+                    'Run composer install/update on the deployed project so the web-token/jwt-library package is available.'
+                );
+            }
+        }
     }
 
     /**
