@@ -90,7 +90,7 @@
                     </div>
                     <div class="admin-card-body text-dark" style="font-size: 0.9rem;">
                         <div class="alert alert-info small mb-3">
-                            <strong>Setup Instructions:</strong> Download keys from PayGlocal GCC Dashboard (Configure → Key Management System), extract key IDs from filenames, and upload to storage/payments/payglocal/
+                            <strong>Setup Instructions:</strong> Download keys from PayGlocal GCC Dashboard (Configure → Key Management System), extract key IDs from filenames, upload them to <code>storage/payments/payglocal/</code>, and use the SDK-style <code>x-gl-token-external</code> flow.
                         </div>
                         
                         <div class="mb-3">
@@ -105,12 +105,6 @@
                             <label class="form-label small fw-bold">MERCHANT ID (MID)</label>
                             <input type="text" class="form-control form-control-sm" name="payglocal_merchant_id" value="{{ $gateways['payglocal']['merchant_id'] }}" placeholder="e.g., MID123456">
                             <small class="form-text text-muted">From GCC → Profile → My Account → TID Details</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">API KEY (for PayCollect / x-gl-auth)</label>
-                            <input type="text" class="form-control form-control-sm" name="payglocal_api_key" value="{{ $gateways['payglocal']['api_key'] }}" placeholder="Paste PayGlocal API key">
-                            <small class="form-text text-muted">For PayCollect hosted checkout, use the API Key from GCC Key Management. This is sent in the <code>x-gl-auth</code> header.</small>
                         </div>
 
                         <div class="mb-3">

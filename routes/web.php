@@ -29,7 +29,7 @@ Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear')
 // Checkout Flow
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
 Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.store');
-Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::match(['get', 'post'], '/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 
 // About Us — static content page, no DB queries needed
 Route::get('/about', function () {
@@ -136,4 +136,3 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('settings/update', [SettingController::class, 'update'])->name('settings.update');
 });
-

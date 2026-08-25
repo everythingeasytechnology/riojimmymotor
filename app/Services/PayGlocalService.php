@@ -3,15 +3,28 @@
 namespace App\Services;
 
 use App\Models\Setting;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
 use Exception;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Jose\Component\Core\AlgorithmManager;
+use Jose\Component\Encryption\Algorithm\ContentEncryption\A128CBCHS256;
+use Jose\Component\Encryption\Algorithm\KeyEncryption\RSAOAEP256;
+use Jose\Component\Encryption\JWEBuilder;
+use Jose\Component\Encryption\Serializer\CompactSerializer as EncryptionCompactSerializer;
+use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\RS256;
+use Jose\Component\Signature\JWSBuilder;
+use Jose\Component\Signature\JWSLoader;
+use Jose\Component\Signature\JWSVerifier;
+use Jose\Component\Signature\Serializer\CompactSerializer as SignatureCompactSerializer;
+use Jose\Component\Signature\Serializer\JWSSerializerManager;
 
 class PayGlocalService
 {
     private const CHECKOUT_PATH = '/gl/v1/payments/initiate/paycollect';
+
     private $merchantId;
-    // private $apiKey;
     private $publicKeyId;      // PayGlocal's public key ID
     private $privateKeyId;     // Your private key ID
     private $publicKeyPath;    // Path to PayGlocal's public key
@@ -26,7 +39,6 @@ class PayGlocalService
     {
         // Read credentials from database (via Setting model) to match admin panel configuration
         $this->merchantId = Setting::getValue('payment_payglocal_merchant_id', '');
-        // $this->apiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
         $this->publicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
         $this->privateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
         $this->publicKeyPath = Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem');
@@ -61,104 +73,235 @@ class PayGlocalService
     }
 
     /**
-     * Create JWT tokens for PayGlocal API authentication.
-     * 
-     * PayGlocal requires JWE (encrypted payload) + JWS (signed encryption).
-     * This follows the flow:
-     * 1. Encrypt payload with PayGlocal's public key → JWE
-     * 2. Sign the JWE with your private key → JWS
-     * 3. Send JWS in header, encrypted payload in body
+     * Build the SDK-style PayGlocal request tokens.
      */
     public function createAuthToken(array $payload): array
     {
-        // Add metadata to payload
-        $payload['mid'] = $this->merchantId;
-        $payload['timestamp'] = now()->toIso8601String();
-
-        // Create JWE (encrypted payload)
-        $jwe = $this->encryptPayload($payload);
-
-        // Create JWS (sign the JWE)
-        $jws = $this->signPayload($jwe);
+        $encryptedPayload = $this->encryptPayload($payload);
+        $signatureToken = $this->signPayload($encryptedPayload);
 
         return [
-            'token' => $jws,
-            'encrypted_payload' => $jwe,
+            'token' => $signatureToken,
+            'encrypted_payload' => $encryptedPayload,
             'headers' => [
-                'x-gl-token-external' => $jws,
-                'Content-Type' => 'plain/text',
-            ]
+                'x-gl-token-external' => $signatureToken,
+                'Content-Type' => 'text/plain',
+            ],
         ];
     }
 
     /**
-     * Encrypt payload using PayGlocal's public key (JWE).
-     * 
-     * JWE format: header.encrypted_key.iv.ciphertext.tag
+     * Encrypt payload using the same JOSE structure shown in PayGlocal's PHP SDK.
      */
     private function encryptPayload(array $payload): string
     {
-        $json = json_encode($payload);
-
-        // Generate random symmetric key for AES-256-GCM
-        $symmetricKey = openssl_random_pseudo_bytes(32);
-        $iv = openssl_random_pseudo_bytes(16);
-
-        // Encrypt the JSON payload with AES-256-GCM
-        $tag = '';
-        $encrypted = openssl_encrypt(
-            $json,
-            'aes-256-gcm',
-            $symmetricKey,
-            OPENSSL_RAW_DATA,
-            $iv,
-            $tag
-        );
-
-        // Load PayGlocal's public key and encrypt the symmetric key
-        $publicKey = $this->loadPublicKey();
-        $encryptedKey = '';
-        openssl_public_encrypt($symmetricKey, $encryptedKey, $publicKey, OPENSSL_PKCS1_OAEP_PADDING);
-
-        // Build JWE: header.encrypted_key.iv.ciphertext.tag
-        $header = $this->base64UrlEncode(json_encode([
-            'alg' => 'RSA-OAEP',
-            'enc' => 'A256GCM',
-            'kid' => $this->publicKeyId
+        $jweBuilder = new JWEBuilder(new AlgorithmManager([
+            new RSAOAEP256(),
+            new A128CBCHS256(),
         ]));
 
-        return implode('.', [
-            $header,
-            $this->base64UrlEncode($encryptedKey),
-            $this->base64UrlEncode($iv),
-            $this->base64UrlEncode($encrypted),
-            $this->base64UrlEncode($tag),
-        ]);
+        $payloadJson = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        $jwe = $jweBuilder
+            ->create()
+            ->withPayload($payloadJson)
+            ->withSharedProtectedHeader([
+                'issued-by' => $this->merchantId,
+                'enc' => 'A128CBC-HS256',
+                'exp' => 30000,
+                'iat' => $this->currentTimestampMillis(),
+                'alg' => 'RSA-OAEP-256',
+                'kid' => $this->publicKeyId,
+            ])
+            ->addRecipient($this->createEncryptionPublicJwk())
+            ->build();
+
+        return (new EncryptionCompactSerializer())->serialize($jwe, 0);
     }
 
     /**
-     * Sign the JWE using your private key (JWS).
-     * 
-     * JWS format: header.payload.signature
-     * Here, payload is the entire JWE from previous step.
+     * Sign the encrypted payload digest using the merchant private key.
      */
-    private function signPayload(string $jwe): string
+    private function signPayload(string $encryptedPayload): string
     {
-        $header = $this->base64UrlEncode(json_encode([
-            'alg' => 'RS256',
-            'typ' => 'JWT',
-            'kid' => $this->privateKeyId
+        $jwsBuilder = new JWSBuilder(new AlgorithmManager([
+            new RS256(),
         ]));
 
-        // Data to sign: header.jwe
-        $signatureData = "{$header}.{$jwe}";
+        $digestPayload = json_encode([
+            'digest' => base64_encode(hash('sha256', $encryptedPayload, true)),
+            'digestAlgorithm' => 'SHA-256',
+            'exp' => 300000,
+            'iat' => $this->currentTimestampMillis(),
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-        // Sign with your private key
-        $privateKey = $this->loadPrivateKey();
-        $signature = '';
-        openssl_sign($signatureData, $signature, $privateKey, 'sha256WithRSAEncryption');
+        $jws = $jwsBuilder
+            ->create()
+            ->withPayload($digestPayload)
+            ->addSignature($this->createSigningPrivateJwk(), [
+                'issued-by' => $this->merchantId,
+                'is-digested' => 'true',
+                'alg' => 'RS256',
+                'x-gl-enc' => 'true',
+                'x-gl-merchantId' => $this->merchantId,
+                'kid' => $this->privateKeyId,
+            ])
+            ->build();
 
-        return $signatureData . '.' . $this->base64UrlEncode($signature);
+        return (new SignatureCompactSerializer())->serialize($jws, 0);
+    }
+
+    /**
+     * Load a public JWK suitable for request encryption.
+     */
+    private function createEncryptionPublicJwk()
+    {
+        $keyContent = $this->getKeyContent($this->publicKeyPath);
+        if (!$keyContent) {
+            throw new Exception('PayGlocal public key could not be loaded from: ' . $this->describeKeySource($this->publicKeyPath));
+        }
+
+        try {
+            return $this->isCertificatePem($keyContent)
+                ? JWKFactory::createFromCertificate($keyContent, [
+                    'kid' => $this->publicKeyId,
+                    'use' => 'enc',
+                    'alg' => 'RSA-OAEP-256',
+                ])
+                : JWKFactory::createFromKey($keyContent, null, [
+                    'kid' => $this->publicKeyId,
+                    'use' => 'enc',
+                    'alg' => 'RSA-OAEP-256',
+                ]);
+        } catch (\Throwable $e) {
+            throw new Exception(
+                'Failed to parse PayGlocal public key for encryption. Ensure it is a valid PEM certificate or public key. ' .
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Load a private JWK suitable for request signing.
+     */
+    private function createSigningPrivateJwk()
+    {
+        $keyContent = $this->getKeyContent($this->privateKeyPath);
+        if (!$keyContent) {
+            throw new Exception('Your private key could not be loaded from: ' . $this->describeKeySource($this->privateKeyPath));
+        }
+
+        try {
+            return JWKFactory::createFromKey($keyContent, null, [
+                'kid' => $this->privateKeyId,
+                'use' => 'sig',
+            ]);
+        } catch (\Throwable $e) {
+            throw new Exception(
+                'Failed to parse your private key for signing. Ensure it is a valid PEM format RSA key. ' .
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Build a public JWK for verifying PayGlocal callback tokens.
+     */
+    private function createVerificationPublicJwk()
+    {
+        $keyContent = $this->getKeyContent($this->publicKeyPath);
+        if (!$keyContent) {
+            throw new Exception('PayGlocal public key could not be loaded from: ' . $this->describeKeySource($this->publicKeyPath));
+        }
+
+        try {
+            return $this->isCertificatePem($keyContent)
+                ? JWKFactory::createFromCertificate($keyContent, [
+                    'kid' => $this->publicKeyId,
+                    'use' => 'sig',
+                ])
+                : JWKFactory::createFromKey($keyContent, null, [
+                    'kid' => $this->publicKeyId,
+                    'use' => 'sig',
+                ]);
+        } catch (\Throwable $e) {
+            throw new Exception(
+                'Failed to parse PayGlocal public key for response verification. Ensure it is a valid PEM certificate or public key. ' .
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Detect certificate PEM material so JWKFactory uses the correct parser.
+     */
+    private function isCertificatePem(string $content): bool
+    {
+        return str_contains($content, '-----BEGIN CERTIFICATE-----');
+    }
+
+    /**
+     * Create the millisecond timestamp string used by the SDK sample.
+     */
+    private function currentTimestampMillis(): string
+    {
+        return (string) round(microtime(true) * 1000);
+    }
+
+    /**
+     * Generate the 16-character merchant unique ID used in the SDK sample payload.
+     */
+    private function generateMerchantUniqueId(): string
+    {
+        return Str::random(16);
+    }
+
+    /**
+     * Split a full customer name into first and last names for billingData.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function splitCustomerName(string $customerName): array
+    {
+        $customerName = trim($customerName);
+        if ($customerName === '') {
+            return ['Customer', ''];
+        }
+
+        $parts = preg_split('/\s+/', $customerName) ?: [];
+        $firstName = array_shift($parts) ?: 'Customer';
+        $lastName = implode(' ', $parts);
+
+        return [$firstName, $lastName];
+    }
+
+    /**
+     * Build the checkout request body in the same envelope shown in the SDK sample.
+     */
+    private function buildCheckoutPayload(array $data): array
+    {
+        [$firstName, $lastName] = $this->splitCustomerName((string) ($data['customer_name'] ?? ''));
+
+        return [
+            'merchantTxnId' => (string) $data['order_id'],
+            'merchantUniqueId' => $this->generateMerchantUniqueId(),
+            'paymentData' => [
+                'totalAmount' => number_format((float) $data['amount'], 2, '.', ''),
+                'txnCurrency' => (string) ($data['currency'] ?? 'USD'),
+                'billingData' => [
+                    'firstName' => (string) ($data['billing_first_name'] ?? $firstName),
+                    'lastName' => (string) ($data['billing_last_name'] ?? $lastName),
+                    'addressStreet1' => (string) ($data['billing_address_1'] ?? ''),
+                    'addressStreet2' => (string) ($data['billing_address_2'] ?? ''),
+                    'addressCity' => (string) ($data['billing_city'] ?? ''),
+                    'addressState' => (string) ($data['billing_state'] ?? ''),
+                    'addressPostalCode' => (string) ($data['billing_postal_code'] ?? ''),
+                    'addressCountry' => (string) ($data['billing_country'] ?? 'US'),
+                    'emailId' => (string) ($data['customer_email'] ?? ''),
+                ],
+            ],
+            'merchantCallbackURL' => (string) $data['return_url'],
+        ];
     }
 
     /**
@@ -567,42 +710,17 @@ class PayGlocalService
     }
 
     /**
-     * Base64 URL encode a string (RFC 4648).
-     */
-    private function base64UrlEncode(string $data): string
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    /**
      * Create a PayGlocal checkout session.
      */
     public function createCheckout(array $data): array
     {
-        $payload = [
-            'merchantTxnId' => $data['order_id'],
-            'merchantCallbackURL' => $data['return_url'],
-            'paymentData' => [
-                // Keep multiple common aliases because PayGlocal's public docs expose
-                // only the envelope keys, while plugin docs point to the same gateway URL.
-                'amount' => (float) $data['amount'],
-                'totalAmount' => (float) $data['amount'],
-                'txnAmount' => (float) $data['amount'],
-                'currency' => $data['currency'] ?? 'USD',
-                'currencyCode' => $data['currency'] ?? 'USD',
-                'txnCurrency' => $data['currency'] ?? 'USD',
-                'customerName' => $data['customer_name'],
-                'customerEmail' => $data['customer_email'],
-                'customerPhone' => $data['customer_phone'],
-                'merchantReturnURL' => $data['return_url'],
-                'merchantCancelURL' => $data['cancel_url'],
-                'metaData' => $data['metadata'] ?? [],
-            ],
-        ];
+        $payload = $this->buildCheckoutPayload($data);
+        $auth = $this->createAuthToken($payload);
 
-        // Make API request
-        $request = Http::withHeaders($this->buildCheckoutHeaders($payload))->withoutRedirecting();
-        $response = $request->post(rtrim($this->baseUrl, '/') . self::CHECKOUT_PATH, $payload);
+        $response = Http::withHeaders($auth['headers'])
+            ->withoutRedirecting()
+            ->withBody($auth['encrypted_payload'], 'text/plain')
+            ->send('POST', rtrim($this->baseUrl, '/') . self::CHECKOUT_PATH);
 
         if ($this->isRedirectResponse($response)) {
             $redirectUrl = $response->header('Location');
@@ -658,30 +776,6 @@ class PayGlocalService
     }
 
     /**
-     * Build the appropriate auth headers for the hosted PayCollect checkout call.
-     */
-    private function buildCheckoutHeaders(array $payload): array
-    {
-        $headers = [
-            'Content-Type' => 'application/json',
-        ];
-
-        if (is_string($this->apiKey) && trim($this->apiKey) !== '') {
-            $this->checkoutAuthMode = 'x-gl-auth';
-            $headers['x-gl-auth'] = trim($this->apiKey);
-
-            return $headers;
-        }
-
-        // Fallback for accounts configured for JWT-based auth.
-        $this->checkoutAuthMode = 'x-gl-token-external';
-        $auth = $this->createAuthToken($payload);
-        $headers['x-gl-token-external'] = $auth['token'];
-
-        return $headers;
-    }
-
-    /**
      * Check whether the gateway returned a redirect-style response.
      */
     private function isRedirectResponse($response): bool
@@ -721,26 +815,44 @@ class PayGlocalService
     }
 
     /**
+     * Decode and verify the PayGlocal callback token sent to the merchant callback URL.
+     *
+     * @return array<string, mixed>
+     */
+    public function decodeCallbackToken(string $token): array
+    {
+        $serializerManager = new JWSSerializerManager([
+            new SignatureCompactSerializer(),
+        ]);
+
+        $verifier = new JWSVerifier(new AlgorithmManager([
+            new RS256(),
+        ]));
+
+        $loader = new JWSLoader($serializerManager, $verifier, null);
+        $signatureIndex = null;
+        $payload = null;
+
+        $jws = $loader->loadAndVerifyWithKey($token, $this->createVerificationPublicJwk(), $signatureIndex, $payload);
+        if ($signatureIndex === null) {
+            throw new Exception('PayGlocal callback signature could not be verified.');
+        }
+
+        $decodedPayload = json_decode($payload ?? $jws->getPayload() ?? '', true);
+        if (!is_array($decodedPayload)) {
+            throw new Exception('PayGlocal callback payload is invalid.');
+        }
+
+        return $decodedPayload;
+    }
+
+    /**
      * Verify a PayGlocal webhook signature.
      */
     public function verifyWebhook(string $token, array $payload): bool
     {
         try {
-            $parts = explode('.', $token);
-            if (count($parts) !== 5) {
-                return false;
-            }
-
-            // Extract components
-            $header = $parts[0];
-            $payload_part = implode('.', array_slice($parts, 1, 3));
-            $signature = base64_decode(strtr($parts[4], '-_', '+/'));
-
-            // Verify signature using your private key
-            $privateKey = $this->loadPrivateKey();
-            $signatureData = "{$header}.{$payload_part}";
-
-            return openssl_verify($signatureData, $signature, $privateKey, 'sha256WithRSAEncryption') === 1;
+            return $this->decodeCallbackToken($token) !== [];
         } catch (Exception $e) {
             return false;
         }

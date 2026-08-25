@@ -134,15 +134,10 @@ class CheckoutController extends Controller
             } elseif ($paymentMethod === 'payglocal') {
                 $payglocalEnabled = Setting::getValue('payment_payglocal_enabled', '0');
                 $payglocalMerchantId = Setting::getValue('payment_payglocal_merchant_id', '');
-                $payglocalApiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
                 $payglocalPublicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
                 $payglocalPrivateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
                 if ($payglocalEnabled !== '1' || empty($payglocalMerchantId)) {
                     return redirect()->back()->withInput()->with('error', 'PayGlocal payment gateway is not properly configured.');
-                }
-
-                if (empty($payglocalApiKey)) {
-                    return redirect()->back()->withInput()->with('error', 'PayGlocal PayCollect API key is missing. Please add the API Key in Admin → Payment Gateways → PayGlocal.');
                 }
 
                 if (empty($payglocalPublicKeyId) || empty($payglocalPrivateKeyId)) {
@@ -227,7 +222,7 @@ class CheckoutController extends Controller
                     $session = $this->createStripeSession($order, $cart);
                     return redirect()->away($session['url']);
                 } elseif ($paymentMethod === 'payglocal') {
-                    $payGlocalUrl = $this->createPayGlocalCheckout($order, $cart);
+                    $payGlocalUrl = $this->createPayGlocalCheckout($order, $cart, $request);
                     return redirect()->away($payGlocalUrl);
                 } else {
                     $razorpayOrder = $this->createRazorpayOrder($order);
@@ -245,7 +240,20 @@ class CheckoutController extends Controller
      */
     public function success(Request $request)
     {
+        $payGlocalCallbackPayload = null;
         $orderNumber = $request->query('order');
+
+        if ($request->filled('x-gl-token')) {
+            try {
+                $payGlocalCallbackPayload = (new \App\Services\PayGlocalService())
+                    ->decodeCallbackToken((string) $request->input('x-gl-token'));
+
+                $orderNumber = $orderNumber ?: $this->findFirstStringByKey($payGlocalCallbackPayload, 'merchantTxnId');
+            } catch (\Exception $e) {
+                return redirect()->route('checkout')->with('error', 'PayGlocal payment verification failed. ' . $e->getMessage());
+            }
+        }
+
         if (!$orderNumber) {
             return redirect('/');
         }
@@ -258,8 +266,28 @@ class CheckoutController extends Controller
             return view('frontend.order-success', compact('order'));
         }
 
+        if (is_array($payGlocalCallbackPayload)) {
+            $transactionId = $this->findFirstStringByKey($payGlocalCallbackPayload, 'gid')
+                ?? $this->findFirstStringByKey($payGlocalCallbackPayload, 'x-gl-gid')
+                ?? $this->findFirstStringByKey($payGlocalCallbackPayload, 'transactionId')
+                ?? $order->transaction_id
+                ?? $order->order_number;
+
+            $status = strtoupper((string) ($this->findFirstStringByKey($payGlocalCallbackPayload, 'status') ?? ''));
+
+            if ($this->isSuccessfulPayGlocalStatus($status)) {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing',
+                    'transaction_id' => $transactionId,
+                ]);
+                session()->forget('cart');
+            } else {
+                return redirect()->route('checkout')->with('error', 'PayGlocal payment verification failed. Status: ' . ($status !== '' ? $status : 'UNKNOWN'));
+            }
+        }
         // Verify Stripe Payment
-        if ($request->has('session_id')) {
+        elseif ($request->has('session_id')) {
             if ($this->verifyStripeSession($request->query('session_id'))) {
                 $order->update([
                     'payment_status' => 'paid',
@@ -414,7 +442,7 @@ class CheckoutController extends Controller
     /**
      * Create a PayGlocal checkout URL via cURL.
      */
-    private function createPayGlocalCheckout(Order $order, array $cart)
+    private function createPayGlocalCheckout(Order $order, array $cart, Request $request)
     {
         try {
             $payGlocalService = new \App\Services\PayGlocalService();
@@ -428,6 +456,14 @@ class CheckoutController extends Controller
                 'customer_phone' => $order->customer_phone,
                 'return_url' => route('checkout.success', ['order' => $order->order_number]),
                 'cancel_url' => route('checkout') . '?cancel_order=' . $order->order_number,
+                'billing_first_name' => $request->first_name,
+                'billing_last_name' => $request->last_name,
+                'billing_address_1' => $request->street_address,
+                'billing_address_2' => $request->street_address_2,
+                'billing_city' => $request->city,
+                'billing_state' => $request->state,
+                'billing_postal_code' => $request->zip_code,
+                'billing_country' => 'US',
                 'metadata' => [
                     'items' => array_map(fn ($item) => [
                         'name' => $item['name'],
@@ -535,6 +571,21 @@ class CheckoutController extends Controller
         }
 
         return empty($parts) ? '' : ' Response summary: ' . implode(' | ', $parts);
+    }
+
+    /**
+     * Treat PayGlocal callback statuses that indicate a successful authorization/capture as paid.
+     */
+    private function isSuccessfulPayGlocalStatus(string $status): bool
+    {
+        return in_array($status, [
+            'SENT_FOR_CAPTURE',
+            'CAPTURED',
+            'PAID',
+            'SUCCESS',
+            'AUTHORIZED',
+            'AUTHORISED',
+        ], true);
     }
 
     /**
