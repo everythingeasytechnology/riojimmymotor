@@ -31,12 +31,12 @@ class PaymentController extends Controller
                 'enabled' => Setting::getValue('payment_payglocal_enabled', '0'),
                 'mode' => Setting::getValue('payment_payglocal_mode', 'sandbox'),
                 'merchant_id' => Setting::getValue('payment_payglocal_merchant_id', ''),
-                'api_key' => Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', '')),
+                // 'api_key' => Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', '')),
                 'public_key_id' => Setting::getValue('payment_payglocal_public_key_id', ''),
                 'private_key_id' => Setting::getValue('payment_payglocal_private_key_id', ''),
                 'public_key_path' => Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem'),
                 'private_key_path' => Setting::getValue('payment_payglocal_private_key_path', 'payments/payglocal/private.pem'),
-                'base_url' => Setting::getValue('payment_payglocal_base_url', 'https://api.uat.payglocal.in')
+                'base_url' => Setting::getValue('payment_payglocal_base_url', 'https://api.prod.payglocal.in')
             ]
         ];
 
