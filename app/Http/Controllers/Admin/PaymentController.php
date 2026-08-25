@@ -68,7 +68,7 @@ class PaymentController extends Controller
         Setting::setValue('payment_payglocal_enabled', $request->has('payglocal_enabled') ? '1' : '0');
         Setting::setValue('payment_payglocal_mode', $request->payglocal_mode);
         Setting::setValue('payment_payglocal_merchant_id', $request->payglocal_merchant_id);
-        Setting::setValue('payment_payglocal_api_key', $request->payglocal_api_key);
+        // Setting::setValue('payment_payglocal_api_key', $request->payglocal_api_key);
         Setting::setValue('payment_payglocal_public_key_id', $request->payglocal_public_key_id);
         Setting::setValue('payment_payglocal_private_key_id', $request->payglocal_private_key_id);
         Setting::setValue('payment_payglocal_public_key_path', $request->payglocal_public_key_path ?: 'payments/payglocal/public.pem');

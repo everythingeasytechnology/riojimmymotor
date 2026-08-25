@@ -11,7 +11,7 @@ class PayGlocalService
 {
     private const CHECKOUT_PATH = '/gl/v1/payments/initiate/paycollect';
     private $merchantId;
-    private $apiKey;
+    // private $apiKey;
     private $publicKeyId;      // PayGlocal's public key ID
     private $privateKeyId;     // Your private key ID
     private $publicKeyPath;    // Path to PayGlocal's public key
@@ -26,7 +26,7 @@ class PayGlocalService
     {
         // Read credentials from database (via Setting model) to match admin panel configuration
         $this->merchantId = Setting::getValue('payment_payglocal_merchant_id', '');
-        $this->apiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
+        // $this->apiKey = Setting::getValue('payment_payglocal_api_key', config('payment.payglocal.api_key', ''));
         $this->publicKeyId = Setting::getValue('payment_payglocal_public_key_id', '');
         $this->privateKeyId = Setting::getValue('payment_payglocal_private_key_id', '');
         $this->publicKeyPath = Setting::getValue('payment_payglocal_public_key_path', 'payments/payglocal/public.pem');
@@ -55,7 +55,7 @@ class PayGlocalService
 
         return match ($baseUrl) {
             'https://sandbox.payglocal.in' => self::UAT_BASE_URL,
-            'https://api.payglocal.in' => self::PROD_BASE_URL,
+            'https://api.prod.payglocal.in' => self::PROD_BASE_URL,
             default => $baseUrl,
         };
     }
@@ -86,7 +86,7 @@ class PayGlocalService
             'encrypted_payload' => $jwe,
             'headers' => [
                 'x-gl-token-external' => $jws,
-                'Content-Type' => 'application/json',
+                'Content-Type' => 'plain/text',
             ]
         ];
     }
